@@ -183,7 +183,12 @@ class EvidenceScreen {
 
         // Play sound effect if specified
         if (item.sound) {
-            audioManager.playSfx(item.sound);
+            // Use playSfx() wrapper for special sprite handling (pretzel, etc.)
+            playSfx(item.sound);
+            // Sync sprite state from global (playSfx handles pretzel sprite)
+            if (gameState.evidenceMolSprite) {
+                this.state.molSprite = gameState.evidenceMolSprite;
+            }
         }
 
         // Check for special sprite triggers

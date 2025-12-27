@@ -1217,6 +1217,9 @@ function updateManuscriptLead() {
 // ============================================
 // WITNESS REPORTS HANDLING
 // ============================================
+// NOTE: These functions have been moved to screens/witness-screen.js
+// Kept here for reference during refactoring
+/*
 const witnessData = DIALOGUES.witnessReports || { intro: [], witnesses: [] };
 
 function setWitnessListEnabled(enabled) {
@@ -1802,6 +1805,7 @@ function advanceWitnessDialogue(playSound = true) {
         processWitnessDialogue();
     }
 }
+*/
 
 // ============================================
 // IDENTIFY SUSPECT SECTION
@@ -2957,13 +2961,7 @@ const clickHandlerMap = {
     },
     'witness-screen': {
         element: document.getElementById('witness-dialogue-box'),
-        advance: () => {
-            if (!gameState.witnessIntroComplete) {
-                advanceWitnessIntro();
-            } else if (gameState.currentWitness) {
-                advanceWitnessDialogue();
-            }
-        }
+        advance: () => witnessScreen.advance()
     },
     'identify-screen': {
         element: document.getElementById('identify-dialogue-box'),
@@ -3027,14 +3025,14 @@ elements.giveCoffeeBtn.addEventListener('click', () => {
 
 // Witness Reports button
 elements.witnessBtn.addEventListener('click', () => {
-    startWitness();
+    witnessScreen.start();
 });
 
 // Witness back to menu button
 elements.witnessBackBtn.addEventListener('click', () => {
     playClickSound();
     // Stop witness music if playing
-    switchToMainMusic();
+    witnessScreen.switchToMainMusic();
     showScreen('menu-screen');
 });
 
@@ -3043,7 +3041,7 @@ elements.witnessList.querySelectorAll('.witness-item').forEach(item => {
     item.addEventListener('click', () => {
         if (!item.disabled) {
             playClickSound();
-            startWitnessDialogue(item.dataset.witness);
+            witnessScreen.selectWitness(item.dataset.witness);
         }
     });
 });
@@ -3094,11 +3092,7 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
         item.classList.remove('completed');
     });
     // Reset witness state
-    gameState.witnessIntroComplete = false;
-    gameState.witnessIntroIndex = 0;
-    gameState.completedWitnesses = [];
-    gameState.currentWitness = null;
-    gameState.witnessDialogueIndex = 0;
+    witnessScreen.reset();
     // Reset witness list
     elements.witnessList.querySelectorAll('.witness-item').forEach(item => {
         item.disabled = false;
@@ -3198,11 +3192,7 @@ document.addEventListener('keydown', (e) => {
                 evidenceScreen.advance(false);
             },
             'witness-screen': () => {
-                if (!gameState.witnessIntroComplete) {
-                    advanceWitnessIntro(false);
-                } else if (gameState.currentWitness) {
-                    advanceWitnessDialogue(false);
-                }
+                witnessScreen.advance(false);
             },
             'identify-screen': () => {
                 if (gameState.identifyPhase === 'fears') {
