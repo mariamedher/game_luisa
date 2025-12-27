@@ -62,6 +62,7 @@ const gameState = {
 
 const animalese = new AnimaleseEngine();
 const audioManager = new AudioManager();
+const choiceHandler = new ChoiceHandler(audioManager);
 
 // Mol's idle dialogue lines for the menu screen
 const MOL_IDLE_DIALOGUES = [
@@ -784,66 +785,64 @@ async function processLeads() {
             break;
 
         case 'choice':
-            elements.leadsChoices.innerHTML = '';
-            elements.leadsChoices.style.display = 'flex';
+            choiceHandler.showChoices(
+                elements.leadsChoices,
+                item.choices,
+                item.responses,
+                {
+                    onChoice: async (index, response) => {
+                        hideInputs('leads-screen');
 
-            item.choices.forEach((choiceText, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.textContent = choiceText;
-                btn.addEventListener('click', async () => {
-                    playClickSound();
-                    hideInputs('leads-screen');
-
-                    const response = item.responses[index];
-                    if (Array.isArray(response)) {
-                        // Multiple responses
-                        for (let i = 0; i < response.length; i++) {
-                            await typeText(response[i], false, elements.leadsDialogueText);
-                            if (i < response.length - 1) {
-                                gameState.waitingForInput = true;
-                                elements.leadsEnterHint.style.display = 'block';
-                                await new Promise(resolve => {
-                                    const handler = () => {
-                                        if (gameState.waitingForInput) {
-                                            gameState.waitingForInput = false;
-                                            elements.leadsEnterHint.style.display = 'none';
-                                            resolve();
-                                        }
-                                    };
-                                    document.addEventListener('keydown', function onKey(e) {
-                                        if (e.key === 'Enter') {
-                                            document.removeEventListener('keydown', onKey);
+                        // Handle single or multiple responses
+                        if (Array.isArray(response)) {
+                            for (let i = 0; i < response.length; i++) {
+                                await typeText(response[i], false, elements.leadsDialogueText);
+                                if (i < response.length - 1) {
+                                    // Wait for Enter between responses
+                                    gameState.waitingForInput = true;
+                                    elements.leadsEnterHint.style.display = 'block';
+                                    await new Promise(resolve => {
+                                        const handler = () => {
+                                            if (gameState.waitingForInput) {
+                                                gameState.waitingForInput = false;
+                                                elements.leadsEnterHint.style.display = 'none';
+                                                resolve();
+                                            }
+                                        };
+                                        const keyHandler = (e) => {
+                                            if (e.key === 'Enter') {
+                                                document.removeEventListener('keydown', keyHandler);
+                                                handler();
+                                            }
+                                        };
+                                        document.addEventListener('keydown', keyHandler);
+                                        elements.leadsDialogueText.parentElement.addEventListener('click', function onClick() {
+                                            elements.leadsDialogueText.parentElement.removeEventListener('click', onClick);
                                             handler();
-                                        }
+                                        }, { once: true });
                                     });
-                                    elements.leadsDialogueText.parentElement.addEventListener('click', function onClick() {
-                                        elements.leadsDialogueText.parentElement.removeEventListener('click', onClick);
-                                        handler();
-                                    }, { once: true });
-                                });
+                                }
                             }
+                        } else {
+                            await typeText(response, false, elements.leadsDialogueText);
                         }
-                    } else {
-                        await typeText(response, false, elements.leadsDialogueText);
-                    }
 
-                    // Show continue button if specified
-                    if (item.buttonText) {
-                        elements.leadsContinueBtn.textContent = item.buttonText[index] || 'Continue';
-                        elements.leadsContinueBtn.style.display = 'block';
-                        elements.leadsContinueBtn.onclick = () => {
-                            playClickSound();
-                            gameState.leadsIndex++;
-                            processLeads();
-                        };
-                    } else {
-                        gameState.waitingForInput = true;
-                        elements.leadsEnterHint.style.display = 'block';
+                        // Show continue button if specified
+                        if (item.buttonText) {
+                            elements.leadsContinueBtn.textContent = item.buttonText[index] || 'Continue';
+                            elements.leadsContinueBtn.style.display = 'block';
+                            elements.leadsContinueBtn.onclick = () => {
+                                audioManager.playSfx('click');
+                                gameState.leadsIndex++;
+                                processLeads();
+                            };
+                        } else {
+                            gameState.waitingForInput = true;
+                            elements.leadsEnterHint.style.display = 'block';
+                        }
                     }
-                });
-                elements.leadsChoices.appendChild(btn);
-            });
+                }
+            );
             break;
 
         case 'end_leads':
