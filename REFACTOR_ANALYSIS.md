@@ -1,5 +1,11 @@
 # Christmas Gift Game - Comprehensive Refactor Analysis
 
+## ⚠️ IMPORTANT: No-Server Constraint
+
+This game must work by opening `index.html` directly (file:// protocol) - **no server required**. All refactoring suggestions use **global scope** (no ES6 modules). For step-by-step implementation, see `REFACTOR_ROADMAP_NO_SERVER.md`.
+
+---
+
 ## Executive Summary
 
 Your visual novel game "Who is Daphne?" is a beautifully crafted experience! After analyzing the entire codebase (~3752 lines in game.js), I've identified several areas where similar functionality uses different approaches, creating maintenance challenges. This document provides a detailed analysis and actionable refactoring suggestions.
@@ -390,8 +396,11 @@ btn.addEventListener('click', async () => {
 ### Phase 1: Extract Common Utilities (Low Risk)
 **Goal:** Create shared helper modules without changing existing code much.
 
-#### 1.1 Create `audio.js`
+**Note:** All classes use **global scope** (no exports) to work with file:// protocol.
+
+#### 1.1 Create `core/audio-manager.js`
 ```javascript
+// Global class - no export keyword
 class AudioManager {
     constructor() {
         this.tracks = new Map();
@@ -408,8 +417,14 @@ class AudioManager {
 }
 ```
 
-#### 1.2 Create `text-effects.js`
+**Load in index.html:**
+```html
+<script src="core/audio-manager.js"></script>
+```
+
+#### 1.2 Create `core/text-effects.js`
 ```javascript
+// Global class - no export keyword
 class TextEffectManager {
     async typeText(text, options = {}) {
         // Unified typing with all options:
@@ -425,7 +440,7 @@ class TextEffectManager {
 }
 ```
 
-#### 1.3 Create `dialogue-manager.js`
+#### 1.3 Create `core/dialogue-manager.js`
 ```javascript
 class DialogueManager {
     constructor(screen, config) {
@@ -740,6 +755,7 @@ christmas-gift/
 4. **Dialogue data structure** (dialogues.js) - Clean separation
 5. **Fear/Dreams sequences** - Emotionally powerful, logic is fine
 6. **Witness music switching** - Works well, just needs cleanup
+7. **No-server architecture** - Perfect for a gift! Easy to share, no dependencies
 
 ---
 

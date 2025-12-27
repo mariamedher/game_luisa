@@ -1,6 +1,9 @@
 # Refactoring Roadmap - Step-by-Step Guide
+## ⚠️ NO SERVER VERSION - Works with file:// protocol
 
 This document contains SPECIFIC, ACTIONABLE refactoring tasks. Each task is self-contained and can be done in a fresh Claude session.
+
+**IMPORTANT:** This game must work by opening index.html directly (no server). All code uses global variables, NO ES6 modules.
 
 ---
 
@@ -9,7 +12,7 @@ This document contains SPECIFIC, ACTIONABLE refactoring tasks. Each task is self
 **For each task:**
 1. Start a new Claude chat
 2. Share: game.js (or specific section), this roadmap, and the task number
-3. Ask: "Please complete Task #X from the roadmap"
+3. Say: "Please complete Task #X from the roadmap. The game must work without a server (no ES6 modules)."
 4. Test the changes
 5. Commit to git before moving to next task
 
@@ -17,110 +20,35 @@ This document contains SPECIFIC, ACTIONABLE refactoring tasks. Each task is self
 
 ---
 
-## Task 1: Create Constants File (30 mins)
+## Task 1: Create Constants File (30 mins) ✅ COMPLETED
 **Risk:** ⚪ None - New file, no changes to existing code
 **Files:** Create `constants.js`
 
-### What to do:
-Create a new file `constants.js` with all magic strings from game.js:
+### What you did:
+Created `constants.js` with global constants (NO `export` keyword):
 
 ```javascript
-export const SCREENS = {
+const SCREENS = {
     START: 'start-screen',
     DIALOGUE: 'dialogue-screen',
-    TITLE: 'title-screen',
-    MENU: 'menu-screen',
-    LEADS: 'leads-screen',
-    EVIDENCE: 'evidence-screen',
-    WITNESS: 'witness-screen',
-    IDENTIFY: 'identify-screen',
-    END: 'end-screen'
+    // ... etc
 };
 
-export const ACTIONS = {
-    WAIT: 'wait',
-    CHOICE: 'choice',
-    CONTINUE_BUTTON: 'continue_button',
-    NAME_INPUT: 'name_input',
-    ADD_LEAD: 'add_lead',
-    COLORED_TEXT: 'colored_text',
-    SHOW_KOLA: 'show_kola',
-    HIDE_KOLA: 'hide_kola',
-    END_LEADS: 'end_leads',
-    SHOW_IMAGE: 'show_image',
-    FLY_AWAY: 'fly_away',
-    SPIN: 'spin',
-    BEAM_UP: 'beam_up',
-    VANISH: 'vanish',
-    SHOW_GRID: 'show_grid',
-    HIDE_GRID: 'hide_grid',
-    START_FEARS: 'start_fears',
-    SHOW_FEARS: 'show_fears',
-    SHOW_NEXT_CLUSTER: 'show_next_cluster',
-    ENABLE_CROSSING: 'enable_crossing',
-    FADE_WORDS: 'fade_words',
-    FULL_RECOVERY: 'full_recovery',
-    SHOW_DREAMS: 'show_dreams',
-    SHOW_FINALE: 'show_finale',
-    START_FADE: 'start_fade',
-    END: 'end',
-    MUSIC_CHANGE: 'music_change'
-};
-
-export const PITCHES = {
-    NORMAL: 'normal',
-    MEDIUM: 'medium',
-    HIGH: 'high',
-    LOW: 'low',
-    VERY_HIGH: 'veryHigh',
-    ALIEN: 'alien',
-    LUISA: 'luisa'
-};
-
-export const SPEAKERS = {
-    MOL: 'mol',
-    CAIT: 'cait',
-    GLORP: 'glorp',
-    RAPHAEL: 'r',
-    ASTARION: 'a',
-    LUISA: 'luisa'
-};
-
-export const SFX = {
-    CLICK: 'click',
-    PAPERS: 'papers',
-    DICE: 'dice',
-    HARP: 'harp',
-    MUNCH: 'munch',
-    CLACK: 'clack',
-    SPARKLE: 'sparkle',
-    SURPRISE: 'surprise',
-    SQUEAK: 'squeak',
-    HELICOPTER: 'helicopter',
-    SNAP: 'snap',
-    SLURP: 'slurp',
-    ALIEN: 'alien',
-    SPACESHIP: 'spaceship'
-};
-
-export const BGM_TRACKS = {
-    MAIN: 'bgm',
-    CAIT: 'bgm-cait',
-    GLORP: 'bgm-glorp',
-    COUPLE: 'bgm-couple',
-    FINAL: 'bgm-final'
-};
+const ACTIONS = { /* ... */ };
+const PITCHES = { /* ... */ };
+const SPEAKERS = { /* ... */ };
+const SFX = { /* ... */ };
+const BGM_TRACKS = { /* ... */ };
 ```
 
-### Then update index.html:
-Add before `<script src="game.js">`:
+Updated `index.html`:
 ```html
-<script type="module" src="constants.js"></script>
+<script src="dialogues.js"></script>
+<script src="constants.js"></script>
+<script src="game.js"></script>
 ```
 
-### Testing:
-- File loads without errors
-- Don't change game.js yet - we'll use these constants in later tasks
+**Status:** ✅ Done and committed
 
 ---
 
@@ -128,11 +56,21 @@ Add before `<script src="game.js">`:
 **Risk:** 🟡 Medium - Changes how audio works
 **Files:** Create `core/audio-manager.js`, modify `game.js`
 
-### What to do:
+### Step 2.1: Create core/audio-manager.js
 
-#### Step 2.1: Create core/audio-manager.js
+**Create the folder first:**
+```
+christmas-gift/
+├── core/              ← NEW FOLDER
+│   └── audio-manager.js
+```
+
+**NO `export` - Make it global:**
+
 ```javascript
-export class AudioManager {
+// core/audio-manager.js
+// Audio management class - global, no ES6 modules
+class AudioManager {
     constructor() {
         this.tracks = new Map();
         this.sfxMap = new Map();
@@ -264,21 +202,38 @@ export class AudioManager {
 }
 ```
 
-#### Step 2.2: Update game.js
+### Step 2.2: Update index.html
+
+Add the audio-manager.js script BEFORE game.js:
+
+```html
+<script src="dialogues.js"></script>
+<script src="constants.js"></script>
+<script src="core/audio-manager.js"></script>  <!-- NEW -->
+<script src="game.js"></script>
+```
+
+### Step 2.3: Update game.js
 
 **Find line ~160 (after `const animalese = new AnimaleseEngine();`):**
+
+Add:
 ```javascript
-// Add this:
-import { AudioManager } from './core/audio-manager.js';
 const audioManager = new AudioManager();
+```
 
-// In initialization (around line 3591), replace audio setup:
+**Find the initialization section (around line 3591):**
+
+Replace:
+```javascript
 // OLD:
-// elements.bgm.volume = 0.4;
-// elements.bgm.play();
+elements.bgm.volume = 0.4;
+elements.bgm.play().catch(() => {});
+```
 
-// NEW:
-// Register all tracks and SFX
+With:
+```javascript
+// NEW: Register all tracks and SFX
 audioManager.registerTrack('bgm', elements.bgm, 0.4);
 audioManager.registerTrack('bgm-cait', elements.bgmCait, 0.3);
 audioManager.registerTrack('bgm-glorp', elements.bgmGlorp, 0.3);
@@ -295,7 +250,7 @@ audioManager.registerSfx('sparkle', elements.sfxSparkle);
 audioManager.registerSfx('surprise', elements.sfxSurprise);
 audioManager.registerSfx('squeak', elements.sfxSqueak);
 audioManager.registerSfx('helicopter', elements.sfxHelicopter);
-audioManager.registerSfx('snap', elements.sfxSnap);
+audioManager.registerSfx('snap', document.getElementById('sfx-snap'));
 audioManager.registerSfx('slurp', elements.sfxSlurp);
 audioManager.registerSfx('alien', elements.sfxAlien);
 audioManager.registerSfx('spaceship', elements.sfxSpaceship);
@@ -304,21 +259,21 @@ audioManager.registerSfx('spaceship', elements.sfxSpaceship);
 audioManager.playTrack('bgm');
 ```
 
-**Replace playClickSound() (line 326):**
+**Replace `playClickSound()` (line ~326):**
 ```javascript
 function playClickSound() {
     audioManager.playSfx('click');
 }
 ```
 
-**Replace playPapersSound() (line 748):**
+**Replace `playPapersSound()` (line ~748):**
 ```javascript
 function playPapersSound() {
     audioManager.playSfx('papers');
 }
 ```
 
-**Replace playSfx() (lines 373-397):**
+**Replace `playSfx()` (lines ~373-397):**
 ```javascript
 function playSfx(soundName) {
     // Special handling for munch (pretzel sprite)
@@ -333,7 +288,7 @@ function playSfx(soundName) {
 }
 ```
 
-**Replace switchToWitnessMusic() (lines 1431-1449):**
+**Replace `switchToWitnessMusic()` (lines ~1431-1449):**
 ```javascript
 function switchToWitnessMusic(witnessId) {
     audioManager.switchToWitnessMusic(witnessId);
@@ -341,7 +296,7 @@ function switchToWitnessMusic(witnessId) {
 }
 ```
 
-**Replace switchToMainMusic() (lines 1451-1461):**
+**Replace `switchToMainMusic()` (lines ~1451-1461):**
 ```javascript
 function switchToMainMusic() {
     audioManager.switchToMainMusic();
@@ -349,7 +304,7 @@ function switchToMainMusic() {
 }
 ```
 
-**Find music change in processIdentifyDialogue() (around line 2302):**
+**Find music change in `processIdentifyDialogue()` (around line 2302):**
 ```javascript
 // OLD:
 // elements.bgm.pause();
@@ -365,7 +320,7 @@ audioManager.fadeToTrack('bgm-final', 2000);
 await audioManager.fadeOut(audioManager.currentTrack.element, 3000);
 ```
 
-### Testing:
+### Testing Task 2:
 - [ ] Main music plays on start
 - [ ] Click sounds work
 - [ ] Papers sound in leads
@@ -382,14 +337,14 @@ await audioManager.fadeOut(audioManager.currentTrack.element, 3000);
 
 ### What to do:
 
-**Find lines 3612-3696 (all the separate keydown handlers):**
+**Find lines ~3612-3696 (all the separate keydown handlers):**
 
 **DELETE all these separate handlers:**
-- Lines 3612-3628: Intro dialogue Enter
-- Lines 3629-3645: Leads Enter
-- Lines 3646-3662: Evidence Enter
-- Lines 3663-3679: Witness Enter
-- Lines 3680-3696: Identify Enter
+- Lines ~3612-3628: Intro dialogue Enter
+- Lines ~3629-3645: Leads Enter
+- Lines ~3646-3662: Evidence Enter
+- Lines ~3663-3679: Witness Enter
+- Lines ~3680-3696: Identify Enter
 
 **REPLACE with single unified handler:**
 ```javascript
@@ -452,10 +407,10 @@ Object.entries(clickHandlerMap).forEach(([screen, config]) => {
 ### What to do:
 
 **DELETE these functions:**
-- `hideAllInputs()` (lines 353-358)
-- `hideLeadsInputs()` (lines 753-757)
-- `hideEvidenceInputs()` (lines 988-992)
-- `hideWitnessInputs()` (lines 1324-1328)
+- `hideAllInputs()` (lines ~353-358)
+- `hideLeadsInputs()` (lines ~753-757)
+- `hideEvidenceInputs()` (lines ~988-992)
+- `hideWitnessInputs()` (lines ~1324-1328)
 
 **REPLACE with single function (add around line 353):**
 ```javascript
@@ -496,11 +451,13 @@ function hideInputs(screen = gameState.currentScreen) {
 ```
 
 **Find and replace all calls:**
+Use your editor's find-and-replace:
 - `hideAllInputs()` → `hideInputs('dialogue-screen')`
 - `hideLeadsInputs()` → `hideInputs('leads-screen')`
 - `hideEvidenceInputs()` → `hideInputs('evidence-screen')`
 - `hideWitnessInputs()` → `hideInputs('witness-screen')`
-- Or just `hideInputs()` if in the right screen context
+
+Or just `hideInputs()` if already in the correct screen context.
 
 ### Testing:
 - [ ] Input fields hide correctly on all screens
@@ -512,25 +469,123 @@ function hideInputs(screen = gameState.currentScreen) {
 **Risk:** 🟢 Low - Clean extraction
 **Files:** Create `core/animalese-engine.js`, modify `game.js`
 
-### What to do:
+### Step 5.1: Create core/animalese-engine.js
 
-#### Step 5.1: Create core/animalese-engine.js
-Copy lines 1-96 from game.js to this new file, add export:
+Copy the AnimaleseEngine class from game.js (lines ~5-96) to new file.
+
+**NO `export` - Keep it global:**
+
 ```javascript
-export class AnimaleseEngine {
-    // ... (all existing code from game.js lines 5-96)
+// core/animalese-engine.js
+// Animalese text-to-speech engine - global, no ES6 modules
+
+class AnimaleseEngine {
+    constructor() {
+        this.audioContext = null;
+        this.baseFrequency = 200;
+        this.letterDuration = 0.06;
+        // Pitch multipliers for different speakers
+        this.pitchSettings = {
+            'normal': 1.0,      // Mol's normal voice
+            'medium': 1.3,      // Astarion - slightly higher
+            'high': 1.8,        // Cait (hamster) - squeaky high
+            'low': 0.7,         // Raphael - deep voice
+            'veryHigh': 2.2,    // Even squeakier
+            'alien': 2.0,       // Glorp - high base, distorted
+            'luisa': 1.15       // Luisa - slightly higher but softer
+        };
+        // Special settings for alien voice
+        this.alienSettings = {
+            baseMultiplier: 2.0,      // High base pitch
+            variationRange: 0.15,     // Low variation (flat intonation)
+            letterDuration: 0.04,     // Faster syllables
+            waveType: 'sawtooth'      // Harsher, more robotic sound
+        };
+    }
+
+    init() {
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    getFrequencyForChar(char, isLoud, pitch = 'normal') {
+        const pitchMultiplier = this.pitchSettings[pitch] || 1.0;
+        const baseFreq = (isLoud ? this.baseFrequency * 1.5 : this.baseFrequency) * pitchMultiplier;
+        const charCode = char.toLowerCase().charCodeAt(0);
+
+        // Special handling for alien voice - flatter, less variation
+        if (pitch === 'alien') {
+            const alienBase = this.baseFrequency * this.alienSettings.baseMultiplier;
+            const variation = ((charCode - 97) / 26) * 50 * this.alienSettings.variationRange;
+            return alienBase + variation + (Math.random() * 10);
+        }
+
+        // Create variation based on character
+        if (char >= 'a' && char <= 'z') {
+            const variation = ((charCode - 97) / 26) * 150 * pitchMultiplier;
+            return baseFreq + variation + (Math.random() * 30 - 15);
+        }
+        return baseFreq + Math.random() * 50;
+    }
+
+    playLetter(char, isLoud = false, pitch = 'normal') {
+        if (!this.audioContext) this.init();
+        if (!/[a-zA-Z]/.test(char)) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        // For alien voice, add a filter to boost upper mids (bright 'ee' timbre)
+        if (pitch === 'alien') {
+            const filter = this.audioContext.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
+            filter.Q.setValueAtTime(1, this.audioContext.currentTime);
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+        } else {
+            oscillator.connect(gainNode);
+        }
+        gainNode.connect(this.audioContext.destination);
+
+        const frequency = this.getFrequencyForChar(char, isLoud, pitch);
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+        // Use sawtooth for alien (harsher), square for others
+        oscillator.type = pitch === 'alien' ? this.alienSettings.waveType : 'square';
+
+        // Volume - louder for emphasized text, louder for alien
+        const volume = isLoud ? 0.18 : (pitch === 'alien' ? 0.14 : 0.08);
+
+        // Duration - faster for alien
+        const duration = pitch === 'alien' ? this.alienSettings.letterDuration : this.letterDuration;
+
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
 }
 ```
 
-#### Step 5.2: Update game.js
-**DELETE lines 1-96**
+### Step 5.2: Update index.html
 
-**ADD at top of game.js:**
-```javascript
-import { AnimaleseEngine } from './core/animalese-engine.js';
+Add before game.js:
+```html
+<script src="constants.js"></script>
+<script src="core/animalese-engine.js"></script>  <!-- NEW -->
+<script src="core/audio-manager.js"></script>
+<script src="game.js"></script>
 ```
 
-**Line ~160 stays the same:**
+### Step 5.3: Update game.js
+
+**DELETE lines ~1-96** (the entire AnimaleseEngine class)
+
+Keep the instantiation line (~160):
 ```javascript
 const animalese = new AnimaleseEngine();
 ```
@@ -546,115 +601,82 @@ const animalese = new AnimaleseEngine();
 **Risk:** 🟢 None - Just cleanup
 **Files:** Modify `game.js`, `index.html`, `styles.css`
 
-### What to do:
+### In index.html:
 
-#### In index.html:
-**DELETE lines 344-352:**
+**DELETE lines ~344-352:**
 ```html
 <!-- DEBUG PANEL - Remove before release -->
 <div id="debug-panel">
-    ...
+    <button id="debug-toggle">DBG</button>
+    <div id="debug-buttons">
+        <button data-debug="fears">Fears</button>
+        <button data-debug="dreams">Dreams</button>
+        <button data-debug="finale">Finale</button>
+    </div>
 </div>
 ```
 
-#### In styles.css:
-**DELETE lines 1537-1589:**
-```css
-/* ============================================
-   DEBUG PANEL - Remove before release
-   ============================================ */
-#debug-panel { ... }
-```
+### In styles.css:
 
-#### In game.js:
-**DELETE lines 3376-3531 (ESC key debug handlers):**
-All the code starting with:
+**DELETE lines ~1537-1589:**
+All the `#debug-panel` styles.
+
+### In game.js:
+
+**DELETE lines ~3376-3531:**
+The entire ESC key debug handler starting with:
 ```javascript
 // Debug shortcuts (ESC key menu)
 let debugMenuOpen = false;
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        // ... entire debug menu
+        // ... entire block
     }
 });
 ```
+
+And DELETE the debug panel toggle near the end too (around line ~3600).
 
 ### Testing:
 - [ ] Game still works
 - [ ] ESC key does nothing
 - [ ] No debug panel visible
+- [ ] No console errors
 
 ---
 
-## Task 7: Create Dialogue Manager Base (3-4 hours)
-**Risk:** 🔴 High - Major refactor
-**Files:** Create `core/dialogue-manager.js`, modify screen processing
+## After Completing Tasks 1-6
 
-**STOP HERE FOR NOW - This needs more planning**
+You'll have:
+- ✅ ~400-500 lines removed from game.js
+- ✅ Better organized code (core/ folder with modular classes)
+- ✅ No debug code
+- ✅ Unified audio management
+- ✅ Cleaner input handling
+- ✅ **Game still works perfectly without a server**
 
-I recommend doing Tasks 1-6 first, then reassessing if you want to continue with deeper refactoring.
-
----
-
-## Testing Checklist (Run After Each Task)
-
-### Basic Flow:
-- [ ] Game starts
-- [ ] Name input works
-- [ ] Intro dialogue completes
-- [ ] Title screen shows
-- [ ] Menu appears
-
-### Leads:
-- [ ] Leads dialogue works
-- [ ] Colored hair text appears
-- [ ] Kola image shows/hides
-- [ ] Choices work
-- [ ] Leads added to sidebar
-
-### Evidence:
-- [ ] Intro dialogue plays
-- [ ] All 5 evidence items clickable
-- [ ] Dice rolls, harp plucks
-- [ ] Manuscript confiscated
-- [ ] Pretzel sprite appears
-- [ ] Back to menu works
-
-### Witness:
-- [ ] All 3 witnesses work
-- [ ] Cait: squeaks, helicopter takeoff
-- [ ] Glorp: spins, alien effect, beam up
-- [ ] Couple: vanish effect
-- [ ] Music changes per witness
-- [ ] Returns to main music
-
-### Identify:
-- [ ] Intro dialogue
-- [ ] Evidence grid shows
-- [ ] Each item reveals trait
-- [ ] Fear words appear
-- [ ] Can cross out fears
-- [ ] Depression filter darkens
-- [ ] Recovery lightens
-- [ ] Dreams reveal on hover
-- [ ] Name input works
-- [ ] Wrong answers have responses
-- [ ] Correct answer triggers finale
-
-### Finale:
-- [ ] Dialogue between Mol & Luisa
-- [ ] Fade to black
-- [ ] "You are loved" appears
-- [ ] Can replay
-
----
-
-## Git Commit Messages (Use These)
-
-After each task:
+### Final file structure:
 ```
-Task 1: Add constants file for magic strings
-Task 2: Extract AudioManager class
+christmas-gift/
+├── index.html
+├── game.js                  (~3300 lines, down from 3752)
+├── dialogues.js
+├── styles.css
+├── constants.js             (NEW)
+├── core/
+│   ├── animalese-engine.js  (NEW)
+│   └── audio-manager.js     (NEW)
+├── images/
+└── audio/
+```
+
+---
+
+## Git Commit Messages
+
+```
+Task 1: Add constants file (no ES6 modules)
+Task 2: Extract AudioManager class (global scope)
 Task 3: Unify keyboard and click input handlers
 Task 4: Consolidate hide inputs functions
 Task 5: Extract AnimaleseEngine to separate file
@@ -663,24 +685,15 @@ Task 6: Remove debug panel and ESC shortcuts
 
 ---
 
-## If Something Breaks
+## Important Notes
 
-1. **Don't panic** - Check browser console
-2. **Check the diff** - What changed?
-3. **Revert** - `git checkout game.js` (if committed before)
-4. **Ask Claude** - Start new chat: "I'm doing Task X, getting error Y"
+**NO SERVER REQUIRED:**
+- ✅ All scripts use global scope
+- ✅ No `import`/`export` keywords
+- ✅ Load order matters (use `<script>` tags in order)
+- ✅ Works with `file://` protocol
 
----
+**When starting each new Claude chat, say:**
+> "I'm refactoring a game that must work WITHOUT a server (no ES6 modules, file:// protocol). Please complete Task #X using global scope only."
 
-## After Completing Tasks 1-6
-
-You'll have:
-- ✅ ~400 lines removed from game.js
-- ✅ Better organized code (core/ folder)
-- ✅ No debug code
-- ✅ Easier to maintain audio
-- ✅ Unified input handling
-
-**Then decide:** Stop here or continue with dialogue manager refactor?
-
-The game will work perfectly after Task 6. Further refactoring is optional polish.
+This ensures the new Claude doesn't accidentally use modules!
