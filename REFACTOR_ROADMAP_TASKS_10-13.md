@@ -463,6 +463,7 @@ class EvidenceScreen {
             dialogueIndex: 0,
             currentEvidence: null,
             viewedEvidence: [],
+            collectedLeads: [],          // Track leads added by this screen
             waitingForInput: false
         };
 
@@ -474,7 +475,9 @@ class EvidenceScreen {
             evidenceList: document.getElementById('evidence-list'),
             continueBtn: document.getElementById('evidence-continue-btn'),
             backBtn: document.getElementById('evidence-back-btn'),
-            backToMenuFromEvidence: document.getElementById('back-to-menu-from-evidence')
+            backToMenuFromEvidence: document.getElementById('back-to-menu-from-evidence'),
+            leadsList: document.getElementById('leads-list'),           // For adding leads
+            persistentLeads: document.getElementById('persistent-leads') // For showing leads panel
         };
 
         this.introSequence = DIALOGUES.evidenceIntro;
@@ -624,6 +627,53 @@ class EvidenceScreen {
         }
     }
 
+    async finishEvidence() {
+        const evidence = this.state.currentEvidence;
+
+        // Add lead to list using our encapsulated method
+        const leadText = evidence.leadText;
+        if (!this.state.collectedLeads.includes(leadText)) {
+            await this.addLeadToList(leadText);  // NOTE: Use this.addLeadToList, not global
+
+            // If this evidence has a "after" text (like manuscript), store it for later
+            if (evidence.leadTextAfter) {
+                evidence._needsUpdate = true;
+            }
+        }
+
+        // Mark as complete
+        if (!this.state.completedEvidence.includes(evidence.id)) {
+            this.state.completedEvidence.push(evidence.id);
+            gameState.completedEvidence = this.state.completedEvidence;
+        }
+
+        // Reset state
+        this.state.currentEvidence = null;
+        this.state.dialogueIndex = 0;
+        gameState.currentEvidence = null;
+
+        // Update UI
+        this.setGridEnabled(true);
+        this.elements.dialogueText.textContent = 'Select another evidence item to examine.';
+        hideInputs('evidence-screen');
+
+        // Check if all evidence is complete
+        if (this.state.completedEvidence.length >= this.evidenceItems.length) {
+            this.elements.dialogueText.textContent = 'All evidence has been examined. Return to the menu to continue.';
+        }
+    }
+
+    async addLeadToList(leadText) {
+        const li = document.createElement('li');
+        this.elements.leadsList.appendChild(li);
+        await typeSilent(leadText, li);
+        if (!this.state.collectedLeads.includes(leadText)) {
+            this.state.collectedLeads.push(leadText);
+        }
+        // Sync with gameState
+        gameState.collectedLeads = this.state.collectedLeads;
+    }
+
     returnToList() {
         this.state.mode = 'list';
         this.state.currentEvidence = null;
@@ -647,6 +697,7 @@ class EvidenceScreen {
         this.state.dialogueIndex = 0;
         this.state.currentEvidence = null;
         this.state.viewedEvidence = [];
+        this.state.collectedLeads = [];
         this.state.waitingForInput = false;
 
         // Sync with gameState
@@ -774,6 +825,7 @@ class WitnessScreen {
             interviewIndex: 0,
             currentWitness: null,
             completedWitnesses: [],
+            collectedLeads: [],          // Track leads added by this screen
             waitingForInput: false
         };
 
@@ -786,7 +838,9 @@ class WitnessScreen {
             choices: document.getElementById('witness-choices'),
             continueBtn: document.getElementById('witness-continue-btn'),
             backBtn: document.getElementById('witness-back-btn'),
-            backToMenuFromWitness: document.getElementById('back-to-menu-from-witness')
+            backToMenuFromWitness: document.getElementById('back-to-menu-from-witness'),
+            leadsList: document.getElementById('leads-list'),           // For adding leads
+            persistentLeads: document.getElementById('persistent-leads') // For showing leads panel
         };
 
         this.introSequence = DIALOGUES.witnessIntro;
@@ -958,7 +1012,19 @@ class WitnessScreen {
         }
     }
 
-    completeWitness() {
+    async completeWitness() {
+        const witness = this.witnesses[this.state.currentWitness];
+
+        // Add leads to list using our encapsulated method
+        if (witness.leads && witness.leads.length > 0) {
+            for (const lead of witness.leads) {
+                if (!this.state.collectedLeads.includes(lead)) {
+                    await this.addLeadToList(lead);
+                }
+            }
+        }
+
+        // Mark witness as completed
         if (!this.state.completedWitnesses.includes(this.state.currentWitness)) {
             this.state.completedWitnesses.push(this.state.currentWitness);
             gameState.completedWitnesses = this.state.completedWitnesses;
@@ -968,6 +1034,17 @@ class WitnessScreen {
         audioManager.fadeToTrack('witness', 1000);
 
         this.returnToList();
+    }
+
+    async addLeadToList(leadText) {
+        const li = document.createElement('li');
+        this.elements.leadsList.appendChild(li);
+        await typeSilent(leadText, li);
+        if (!this.state.collectedLeads.includes(leadText)) {
+            this.state.collectedLeads.push(leadText);
+        }
+        // Sync with gameState
+        gameState.collectedLeads = this.state.collectedLeads;
     }
 
     returnToList() {
@@ -993,6 +1070,7 @@ class WitnessScreen {
         this.state.interviewIndex = 0;
         this.state.currentWitness = null;
         this.state.completedWitnesses = [];
+        this.state.collectedLeads = [];
         this.state.waitingForInput = false;
 
         // Sync with gameState

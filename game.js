@@ -905,6 +905,9 @@ function startLeads() {
 // ============================================
 // PHYSICAL EVIDENCE HANDLING
 // ============================================
+// NOTE: These functions have been moved to screens/evidence-screen.js
+// Kept here for reference during refactoring
+/*
 function setEvidenceGridEnabled(enabled) {
     const items = elements.evidenceGrid.querySelectorAll('.evidence-item');
     items.forEach(item => {
@@ -1195,6 +1198,7 @@ function advanceEvidenceDialogue(playSound = true) {
         processEvidenceDialogue();
     }
 }
+*/
 
 function updateManuscriptLead() {
     // Update manuscript lead text when returning to menu
@@ -2948,11 +2952,7 @@ const clickHandlerMap = {
     'evidence-screen': {
         element: document.getElementById('evidence-dialogue-box'),
         advance: () => {
-            if (!gameState.evidenceIntroComplete) {
-                advanceEvidenceIntro();
-            } else if (gameState.currentEvidence) {
-                advanceEvidenceDialogue();
-            }
+            evidenceScreen.advance();
         }
     },
     'witness-screen': {
@@ -2999,7 +2999,7 @@ Object.entries(clickHandlerMap).forEach(([screen, config]) => {
 
 // Physical Evidence button
 document.getElementById('evidence-btn').addEventListener('click', () => {
-    startEvidence();
+    evidenceScreen.start();
 });
 
 // Evidence back to menu button
@@ -3014,7 +3014,7 @@ elements.evidenceGrid.querySelectorAll('.evidence-item').forEach(item => {
     item.addEventListener('click', () => {
         if (!item.disabled) {
             playClickSound();
-            startEvidenceDialogue(item.dataset.evidence);
+            evidenceScreen.selectEvidence(item.dataset.evidence);
         }
     });
 });
@@ -3086,13 +3086,8 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     introScreen.reset();
     // Reset leads screen
     leadsScreen.reset();
-    // Reset evidence state
-    gameState.evidenceIntroComplete = false;
-    gameState.evidenceIntroIndex = 0;
-    gameState.completedEvidence = [];
-    gameState.currentEvidence = null;
-    gameState.evidenceDialogueIndex = 0;
-    gameState.evidenceChoiceResponse = null;
+    // Reset evidence screen
+    evidenceScreen.reset();
     // Reset evidence grid
     elements.evidenceGrid.querySelectorAll('.evidence-item').forEach(item => {
         item.disabled = false;
@@ -3200,11 +3195,7 @@ document.addEventListener('keydown', (e) => {
             'dialogue-screen': () => introScreen.advance(),
             'leads-screen': () => leadsScreen.advance(false),
             'evidence-screen': () => {
-                if (!gameState.evidenceIntroComplete) {
-                    advanceEvidenceIntro(false);
-                } else if (gameState.currentEvidence) {
-                    advanceEvidenceDialogue(false);
-                }
+                evidenceScreen.advance(false);
             },
             'witness-screen': () => {
                 if (!gameState.witnessIntroComplete) {
