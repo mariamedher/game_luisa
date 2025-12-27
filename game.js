@@ -158,6 +158,7 @@ const gameState = {
 };
 
 const animalese = new AnimaleseEngine();
+const audioManager = new AudioManager();
 
 // Mol's idle dialogue lines for the menu screen
 const MOL_IDLE_DIALOGUES = [
@@ -324,8 +325,7 @@ const elements = {
 // UTILITY FUNCTIONS
 // ============================================
 function playClickSound() {
-    elements.sfxClick.currentTime = 0;
-    elements.sfxClick.play().catch(() => {});
+    audioManager.playSfx('click');
 }
 
 function showScreen(screenId) {
@@ -371,28 +371,14 @@ function updateIdentifySuspectButton() {
 }
 
 function playSfx(soundName) {
-    const sfxMap = {
-        'dice': elements.sfxDice,
-        'harp': elements.sfxHarp,
-        'munch': elements.sfxMunch,
-        'squeak': elements.sfxSqueak,
-        'helicopter': elements.sfxHelicopter,
-        'snap': document.getElementById('sfx-snap'),
-        'alien': elements.sfxAlien,
-        'spaceship': elements.sfxSpaceship
-    };
-    const sfx = sfxMap[soundName];
-    if (sfx) {
-        sfx.currentTime = 0;
-        sfx.play().catch(() => {});
-    }
-
-    // Special sprite change for munch (pretzel)
+    // Special handling for munch (pretzel sprite)
     if (soundName === 'munch' && elements.evidenceMol) {
-        elements.sfxSparkle.currentTime = 0;
-        elements.sfxSparkle.play().catch(() => {});
+        audioManager.playSfx('sparkle');
+        audioManager.playSfx('munch');
         elements.evidenceMol.src = 'images/Mol_pretzel.png';
         gameState.evidenceMolSprite = 'pretzel';
+    } else {
+        audioManager.playSfx(soundName);
     }
 }
 
@@ -504,11 +490,9 @@ function giveCoffee() {
     }
 
     // Play sparkle sound, then slurp after a short delay
-    elements.sfxSparkle.currentTime = 0;
-    elements.sfxSparkle.play().catch(() => {});
+    audioManager.playSfx('sparkle');
     setTimeout(() => {
-        elements.sfxSlurp.currentTime = 0;
-        elements.sfxSlurp.play().catch(() => {});
+        audioManager.playSfx('slurp');
     }, 400);
 
     // Switch to happy Mol sprite
@@ -746,8 +730,7 @@ async function handleNameConfirmation() {
 // LEADS HANDLING
 // ============================================
 function playPapersSound() {
-    elements.sfxPapers.currentTime = 0;
-    elements.sfxPapers.play().catch(() => {});
+    audioManager.playSfx('papers');
 }
 
 function hideLeadsInputs() {
@@ -1059,8 +1042,7 @@ async function processEvidenceIntro() {
 
     // Check for strawberry jam line (index 2) - show jam sprite
     if (gameState.evidenceIntroIndex === 2 && item.text.includes('strawberry jam')) {
-        elements.sfxSparkle.currentTime = 0;
-        elements.sfxSparkle.play().catch(() => {});
+        audioManager.playSfx('sparkle');
         elements.evidenceMol.src = 'images/Mol_jam.png';
         gameState.evidenceMolSprite = 'jam';
     }
@@ -1137,8 +1119,7 @@ async function processEvidenceDialogue() {
 
     // Check for special sprite triggers
     if (item.text && item.text.includes('tactical positioning described here is')) {
-        elements.sfxSurprise.currentTime = 0;
-        elements.sfxSurprise.play().catch(() => {});
+        audioManager.playSfx('surprise');
         elements.evidenceMol.src = 'images/Mol_surprised.png';
         gameState.evidenceMolSprite = 'surprised';
     }
@@ -1429,35 +1410,13 @@ async function startWitnessDialogue(witnessId) {
 }
 
 function switchToWitnessMusic(witnessId) {
-    // Fade out main BGM
-    elements.bgm.pause();
-
-    // Get witness-specific music element
-    const musicMap = {
-        'cait': elements.bgmCait,
-        'glorp': elements.bgmGlorp,
-        'couple': elements.bgmCouple
-    };
-
-    const witnessMusic = musicMap[witnessId];
-    if (witnessMusic) {
-        witnessMusic.volume = 0.3;
-        witnessMusic.currentTime = 0;
-        witnessMusic.play().catch(() => {});
-        gameState.currentWitnessMusic = witnessMusic;
-    }
+    audioManager.switchToWitnessMusic(witnessId);
+    gameState.currentWitnessMusic = witnessId;
 }
 
 function switchToMainMusic() {
-    // Stop witness music
-    if (gameState.currentWitnessMusic) {
-        gameState.currentWitnessMusic.pause();
-        gameState.currentWitnessMusic.currentTime = 0;
-        gameState.currentWitnessMusic = null;
-    }
-
-    // Resume main BGM
-    elements.bgm.play().catch(() => {});
+    audioManager.switchToMainMusic();
+    gameState.currentWitnessMusic = null;
 }
 
 async function processWitnessDialogue() {
@@ -1995,10 +1954,7 @@ async function processIdentifyDialogue() {
     // Handle special actions
     if (item.action === 'music_change') {
         // Change to final music
-        elements.bgm.pause();
-        elements.bgmFinal.volume = 0.3;
-        elements.bgmFinal.currentTime = 0;
-        elements.bgmFinal.play().catch(() => {});
+        audioManager.fadeToTrack('bgm-final', 2000);
 
         // Type text and continue
         await typeText(item.text, false, elements.identifyDialogueText);
@@ -2087,10 +2043,7 @@ async function handleIdentifyChoice(choiceIndex, response) {
 
         // Handle music change in response
         if (item.action === 'music_change') {
-            elements.bgm.pause();
-            elements.bgmFinal.volume = 0.3;
-            elements.bgmFinal.currentTime = 0;
-            elements.bgmFinal.play().catch(() => {});
+            audioManager.fadeToTrack('bgm-final', 2000);
             // Hide the leads list
             elements.persistentLeads.style.display = 'none';
         }
@@ -2369,9 +2322,9 @@ async function showNextFearCluster() {
 
     // Fade out background music as depression increases
     if (cluster.depressionStage === 1) {
-        elements.bgm.volume = 0.15;
+        audioManager.currentTrack.element.volume = 0.15;
     } else if (cluster.depressionStage >= 2) {
-        elements.bgm.volume = 0;
+        audioManager.currentTrack.element.volume = 0;
     }
 
     // Type out each word with delay
@@ -2623,7 +2576,7 @@ async function processFearConclusion() {
         // Conclusion complete - move to next phase (dreams or end)
         gameState.identifyPhase = 'complete';
         // Restore music
-        elements.bgm.volume = 0.3;
+        audioManager.currentTrack.element.volume = 0.3;
         return;
     }
 
@@ -2652,7 +2605,7 @@ async function processFearConclusion() {
         }
 
         // Restore music
-        elements.bgm.volume = 0.3;
+        audioManager.currentTrack.element.volume = 0.3;
 
         // Auto-advance after a pause
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -2880,7 +2833,7 @@ async function processFinaleDialogue() {
         }
 
         // Fade out music
-        fadeOutMusic(3000);
+        await audioManager.fadeOut(audioManager.currentTrack.element, 3000);
 
         // After fade, show end screen
         await new Promise(resolve => setTimeout(resolve, 4000));
@@ -2903,7 +2856,7 @@ async function processFinaleDialogue() {
         }
 
         // Start fading music
-        fadeOutMusic(8000);
+        audioManager.fadeOut(audioManager.currentTrack.element, 8000);
     }
 
     // Type the dialogue with speaker color and voice pitch
@@ -2969,33 +2922,6 @@ async function typeTextToElement(text, element, className, pitch = 'normal') {
     }
 }
 
-// Fade out music over duration
-function fadeOutMusic(duration) {
-    const startVolume = elements.bgmFinal.volume || elements.bgm.volume;
-    const steps = 30;
-    const stepDuration = duration / steps;
-    const volumeStep = startVolume / steps;
-
-    let currentStep = 0;
-    const fadeInterval = setInterval(() => {
-        currentStep++;
-        const newVolume = Math.max(0, startVolume - (volumeStep * currentStep));
-
-        if (elements.bgmFinal.volume > 0) {
-            elements.bgmFinal.volume = newVolume;
-        }
-        if (elements.bgm.volume > 0) {
-            elements.bgm.volume = newVolume;
-        }
-
-        if (currentStep >= steps) {
-            clearInterval(fadeInterval);
-            elements.bgm.pause();
-            elements.bgmFinal.pause();
-        }
-    }, stepDuration);
-}
-
 // ============================================
 // EVENT LISTENERS
 // ============================================
@@ -3005,11 +2931,30 @@ elements.startBtn.addEventListener('click', () => {
     playClickSound();
     animalese.init();
 
-    // Start background music
-    elements.bgm.volume = 0.3;
-    elements.bgm.play().catch(() => {
-        console.log('Audio autoplay blocked - music will start on next interaction');
-    });
+    // Register all tracks and SFX
+    audioManager.registerTrack('bgm', elements.bgm, 0.3);
+    audioManager.registerTrack('bgm-cait', elements.bgmCait, 0.3);
+    audioManager.registerTrack('bgm-glorp', elements.bgmGlorp, 0.3);
+    audioManager.registerTrack('bgm-couple', elements.bgmCouple, 0.3);
+    audioManager.registerTrack('bgm-final', elements.bgmFinal, 0.3);
+
+    audioManager.registerSfx('click', elements.sfxClick);
+    audioManager.registerSfx('papers', elements.sfxPapers);
+    audioManager.registerSfx('dice', elements.sfxDice);
+    audioManager.registerSfx('harp', elements.sfxHarp);
+    audioManager.registerSfx('munch', elements.sfxMunch);
+    audioManager.registerSfx('clack', elements.sfxClack);
+    audioManager.registerSfx('sparkle', elements.sfxSparkle);
+    audioManager.registerSfx('surprise', elements.sfxSurprise);
+    audioManager.registerSfx('squeak', elements.sfxSqueak);
+    audioManager.registerSfx('helicopter', elements.sfxHelicopter);
+    audioManager.registerSfx('snap', document.getElementById('sfx-snap'));
+    audioManager.registerSfx('slurp', elements.sfxSlurp);
+    audioManager.registerSfx('alien', elements.sfxAlien);
+    audioManager.registerSfx('spaceship', elements.sfxSpaceship);
+
+    // Start main music
+    audioManager.playTrack('bgm');
 
     showScreen('dialogue-screen');
     processDialogue();
@@ -3088,9 +3033,60 @@ elements.backToMenuBtn.addEventListener('click', () => {
     showScreen('menu-screen');
 });
 
-// Click on leads dialogue box to advance
-document.getElementById('leads-dialogue-box').addEventListener('click', () => {
-    advanceLeads();
+// Unified click-to-continue handlers
+const clickHandlerMap = {
+    'dialogue-screen': { element: elements.dialogueBox, advance: advanceDialogue },
+    'leads-screen': { element: document.getElementById('leads-dialogue-box'), advance: advanceLeads },
+    'evidence-screen': {
+        element: document.getElementById('evidence-dialogue-box'),
+        advance: () => {
+            if (!gameState.evidenceIntroComplete) {
+                advanceEvidenceIntro();
+            } else if (gameState.currentEvidence) {
+                advanceEvidenceDialogue();
+            }
+        }
+    },
+    'witness-screen': {
+        element: document.getElementById('witness-dialogue-box'),
+        advance: () => {
+            if (!gameState.witnessIntroComplete) {
+                advanceWitnessIntro();
+            } else if (gameState.currentWitness) {
+                advanceWitnessDialogue();
+            }
+        }
+    },
+    'identify-screen': {
+        element: document.getElementById('identify-dialogue-box'),
+        advance: () => {
+            if (gameState.identifyPhase === 'fears') {
+                // Fear sequence - different states
+                if (gameState.fearConclusionIndex > 0 || (gameState.crossedClusters >= fearData.crossOutResponses.length && gameState.additionalClusterIndex >= fearData.additionalClusters.length)) {
+                    advanceFearConclusion();
+                } else if (gameState.fearIntroIndex < fearData.intro.length) {
+                    advanceFearIntro();
+                } else if (!gameState.crossingEnabled) {
+                    advanceFearClusterDialogue();
+                }
+                // If crossing is enabled, don't advance - player must click words
+            } else if (gameState.currentIdentifyEvidence) {
+                advanceIdentifyEvidenceDialogue();
+            } else if (gameState.identifyPhase !== 'grid') {
+                advanceIdentifyDialogue();
+            }
+        }
+    }
+};
+
+Object.entries(clickHandlerMap).forEach(([screen, config]) => {
+    config.element.addEventListener('click', () => {
+        if (gameState.currentScreen === screen &&
+            gameState.waitingForInput &&
+            !gameState.isTyping) {
+            config.advance();
+        }
+    });
 });
 
 // Physical Evidence button
@@ -3103,15 +3099,6 @@ elements.evidenceBackBtn.addEventListener('click', () => {
     playClickSound();
     updateManuscriptLead();
     showScreen('menu-screen');
-});
-
-// Click on evidence dialogue box to advance
-document.getElementById('evidence-dialogue-box').addEventListener('click', () => {
-    if (!gameState.evidenceIntroComplete) {
-        advanceEvidenceIntro();
-    } else if (gameState.currentEvidence) {
-        advanceEvidenceDialogue();
-    }
 });
 
 // Evidence item click handlers
@@ -3143,15 +3130,6 @@ elements.witnessBackBtn.addEventListener('click', () => {
     showScreen('menu-screen');
 });
 
-// Click on witness dialogue box to advance
-document.getElementById('witness-dialogue-box').addEventListener('click', () => {
-    if (!gameState.witnessIntroComplete) {
-        advanceWitnessIntro();
-    } else if (gameState.currentWitness) {
-        advanceWitnessDialogue();
-    }
-});
-
 // Witness item click handlers
 elements.witnessList.querySelectorAll('.witness-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -3167,25 +3145,6 @@ elements.identifySuspectBtn.addEventListener('click', () => {
     startIdentifySuspect();
 });
 
-// Identify dialogue box click handler
-document.getElementById('identify-dialogue-box').addEventListener('click', () => {
-    if (gameState.identifyPhase === 'fears') {
-        // Fear sequence - different states
-        if (gameState.fearConclusionIndex > 0 || (gameState.crossedClusters >= fearData.crossOutResponses.length && gameState.additionalClusterIndex >= fearData.additionalClusters.length)) {
-            advanceFearConclusion();
-        } else if (gameState.fearIntroIndex < fearData.intro.length) {
-            advanceFearIntro();
-        } else if (!gameState.crossingEnabled) {
-            advanceFearClusterDialogue();
-        }
-        // If crossing is enabled, don't advance - player must click words
-    } else if (gameState.currentIdentifyEvidence) {
-        advanceIdentifyEvidenceDialogue();
-    } else if (gameState.identifyPhase !== 'grid') {
-        advanceIdentifyDialogue();
-    }
-});
-
 // Identify grid item click handlers
 elements.identifyGrid.querySelectorAll('.identify-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -3199,7 +3158,7 @@ elements.identifyGrid.querySelectorAll('.identify-item').forEach(item => {
 // Exit button
 elements.exitBtn.addEventListener('click', () => {
     playClickSound();
-    elements.bgm.pause();
+    audioManager.pauseCurrent();
     // Hide leads list
     elements.persistentLeads.style.display = 'none';
     showScreen('end-screen');
@@ -3312,8 +3271,10 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     });
     elements.identifyGrid.style.display = 'none';
     // Stop final music if playing
-    elements.bgmFinal.pause();
-    elements.bgmFinal.currentTime = 0;
+    audioManager.pauseCurrent();
+    if (audioManager.currentTrack) {
+        audioManager.currentTrack.element.currentTime = 0;
+    }
     elements.dialogueText.innerHTML = '';
     elements.leadsList.innerHTML = '';
     elements.persistentLeads.style.display = 'none';
@@ -3322,48 +3283,52 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     showScreen('start-screen');
 });
 
-// Click on dialogue box to advance
-elements.dialogueBox.addEventListener('click', () => {
-    advanceDialogue();
-});
-
-// Press Enter to advance dialogue (no click sound for keyboard)
+// Unified keyboard input handler
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.target.matches('input')) {
-        if (gameState.currentScreen === 'dialogue-screen') {
-            advanceDialogue(false);
-        } else if (gameState.currentScreen === 'leads-screen') {
-            advanceLeads(false);
-        } else if (gameState.currentScreen === 'evidence-screen') {
-            if (!gameState.evidenceIntroComplete) {
-                advanceEvidenceIntro(false);
-            } else if (gameState.currentEvidence) {
-                advanceEvidenceDialogue(false);
-            }
-        } else if (gameState.currentScreen === 'witness-screen') {
-            if (!gameState.witnessIntroComplete) {
-                advanceWitnessIntro(false);
-            } else if (gameState.currentWitness) {
-                advanceWitnessDialogue(false);
-            }
-        } else if (gameState.currentScreen === 'identify-screen') {
-            if (gameState.identifyPhase === 'fears') {
-                // Fear sequence - different states
-                if (gameState.fearConclusionIndex > 0 || gameState.crossedClusters >= fearData.crossOutResponses.length) {
-                    advanceFearConclusion();
-                } else if (gameState.fearIntroIndex < fearData.intro.length) {
-                    advanceFearIntro();
-                } else if (!gameState.crossingEnabled) {
-                    advanceFearClusterDialogue();
+        // Map screens to their advance functions
+        const screenHandlers = {
+            'dialogue-screen': () => advanceDialogue(false),
+            'leads-screen': () => advanceLeads(false),
+            'evidence-screen': () => {
+                if (!gameState.evidenceIntroComplete) {
+                    advanceEvidenceIntro(false);
+                } else if (gameState.currentEvidence) {
+                    advanceEvidenceDialogue(false);
                 }
-                // If crossing is enabled, don't advance with Enter - player must click words
-            } else if (gameState.currentIdentifyEvidence) {
-                advanceIdentifyEvidenceDialogue(false);
-            } else if (gameState.identifyPhase !== 'grid') {
-                advanceIdentifyDialogue(false);
+            },
+            'witness-screen': () => {
+                if (!gameState.witnessIntroComplete) {
+                    advanceWitnessIntro(false);
+                } else if (gameState.currentWitness) {
+                    advanceWitnessDialogue(false);
+                }
+            },
+            'identify-screen': () => {
+                if (gameState.identifyPhase === 'fears') {
+                    // Fear sequence - different states
+                    if (gameState.fearConclusionIndex > 0 || gameState.crossedClusters >= fearData.crossOutResponses.length) {
+                        advanceFearConclusion();
+                    } else if (gameState.fearIntroIndex < fearData.intro.length) {
+                        advanceFearIntro();
+                    } else if (!gameState.crossingEnabled) {
+                        advanceFearClusterDialogue();
+                    }
+                    // If crossing is enabled, don't advance with Enter - player must click words
+                } else if (gameState.currentIdentifyEvidence) {
+                    advanceIdentifyEvidenceDialogue(false);
+                } else if (gameState.identifyPhase !== 'grid') {
+                    advanceIdentifyDialogue(false);
+                }
             }
+        };
+
+        const handler = screenHandlers[gameState.currentScreen];
+        if (handler) {
+            handler();
         }
     }
+
     // Press Escape to skip dialogue and go to title screen
     if (e.key === 'Escape' && gameState.currentScreen === 'dialogue-screen') {
         gameState.skipTyping = true;
@@ -3467,9 +3432,7 @@ document.addEventListener('keydown', (e) => {
             // Hide leads list during identify
             document.getElementById('persistent-leads').style.display = 'none';
             // Change music to final
-            elements.bgm.pause();
-            elements.bgmFinal.volume = 0.3;
-            elements.bgmFinal.play().catch(() => {});
+            audioManager.fadeToTrack('bgm-final', 2000);
             // Start fears directly
             startFearSequence();
             console.log('[DEBUG] Skipped to fear sequence');
@@ -3503,7 +3466,7 @@ document.addEventListener('keydown', (e) => {
             // Remove depression filter
             setRecoveryLevel(4);
             // Restore music volume
-            elements.bgm.volume = 0.3;
+            audioManager.currentTrack.element.volume = 0.3;
             // Start dreams
             startDreamsSequence();
             console.log('[DEBUG] Skipped fears, jumped to dreams');
@@ -3550,9 +3513,7 @@ document.querySelectorAll('#debug-buttons button').forEach(btn => {
             // Hide leads
             elements.persistentLeads.style.display = 'none';
             // Switch to final music
-            elements.bgm.pause();
-            elements.bgmFinal.volume = 0.3;
-            elements.bgmFinal.play().catch(() => {});
+            audioManager.fadeToTrack('bgm-final', 2000);
             // Show identify screen
             showScreen('identify-screen');
         };
