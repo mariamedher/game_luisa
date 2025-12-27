@@ -594,6 +594,9 @@ async function typeSilent(text, targetElement) {
 // ============================================
 // DIALOGUE HANDLING
 // ============================================
+// NOTE: These functions have been moved to screens/intro-screen.js
+// Kept here for reference during refactoring
+/*
 async function processDialogue() {
     if (gameState.dialogueIndex >= dialogueSequence.length) {
         // End of dialogue - show title screen
@@ -657,6 +660,7 @@ async function handleNameConfirmation() {
     elements.confirmationContainer.style.display = 'flex';
     elements.confirmText.textContent = '';
 }
+*/
 
 // ============================================
 // LEADS HANDLING
@@ -2865,17 +2869,12 @@ elements.startBtn.addEventListener('click', () => {
     audioManager.playTrack('bgm');
 
     showScreen('dialogue-screen');
-    processDialogue();
+    introScreen.start();
 });
 
 // Name submission
 elements.submitNameBtn.addEventListener('click', () => {
-    playClickSound();
-    const name = elements.nameInput.value.trim();
-    if (name) {
-        gameState.playerName = name;
-        handleNameConfirmation();
-    }
+    introScreen.handleNameSubmit();
 });
 
 elements.nameInput.addEventListener('keypress', (e) => {
@@ -2897,24 +2896,16 @@ elements.finaleNameInput.addEventListener('keypress', (e) => {
 
 // Yes/No confirmation
 elements.yesBtn.addEventListener('click', () => {
-    playClickSound();
-    gameState.dialogueIndex++;
-    processDialogue();
+    introScreen.handleYesConfirmation();
 });
 
 elements.noBtn.addEventListener('click', () => {
-    playClickSound();
-    hideInputs('dialogue-screen');
-    elements.nameInputContainer.style.display = 'flex';
-    elements.nameInput.value = '';
-    elements.nameInput.focus();
+    introScreen.handleNoConfirmation();
 });
 
 // Action button (Continue, I am ready, etc.)
 elements.actionBtn.addEventListener('click', () => {
-    playClickSound();
-    gameState.dialogueIndex++;
-    processDialogue();
+    introScreen.handleActionButton();
 });
 
 // Title screen continue
@@ -2943,7 +2934,7 @@ elements.backToMenuBtn.addEventListener('click', () => {
 
 // Unified click-to-continue handlers
 const clickHandlerMap = {
-    'dialogue-screen': { element: elements.dialogueBox, advance: advanceDialogue },
+    'dialogue-screen': { element: elements.dialogueBox, advance: () => introScreen.advance() },
     'leads-screen': { element: document.getElementById('leads-dialogue-box'), advance: advanceLeads },
     'evidence-screen': {
         element: document.getElementById('evidence-dialogue-box'),
@@ -3082,6 +3073,8 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     gameState.isTyping = false;
     gameState.waitingForInput = false;
     gameState.skipTyping = false;
+    // Reset intro screen
+    introScreen.reset();
     gameState.leadsIndex = 0;
     gameState.leadsComplete = false;
     gameState.collectedLeads = [];
@@ -3196,7 +3189,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.target.matches('input')) {
         // Map screens to their advance functions
         const screenHandlers = {
-            'dialogue-screen': () => advanceDialogue(false),
+            'dialogue-screen': () => introScreen.advance(),
             'leads-screen': () => advanceLeads(false),
             'evidence-screen': () => {
                 if (!gameState.evidenceIntroComplete) {
