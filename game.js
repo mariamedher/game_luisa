@@ -1810,6 +1810,9 @@ function advanceWitnessDialogue(playSound = true) {
 // ============================================
 // IDENTIFY SUSPECT SECTION
 // ============================================
+// NOTE: These functions have been moved to screens/identify-screen.js
+// Kept here for reference during refactoring
+/*
 const identifyData = DIALOGUES.identifySuspect;
 
 function startIdentifySuspect() {
@@ -2850,6 +2853,7 @@ async function typeTextToElement(text, element, className, pitch = 'normal') {
         await new Promise(resolve => setTimeout(resolve, delay));
     }
 }
+*/
 
 // ============================================
 // EVENT LISTENERS
@@ -2902,12 +2906,12 @@ elements.nameInput.addEventListener('keypress', (e) => {
 
 // Finale name input
 elements.finaleSubmitBtn.addEventListener('click', () => {
-    handleFinaleSubmit();
+    identifyScreen.handleFinaleSubmit();
 });
 
 elements.finaleNameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        handleFinaleSubmit();
+        identifyScreen.handleFinaleSubmit();
     }
 });
 
@@ -2965,23 +2969,7 @@ const clickHandlerMap = {
     },
     'identify-screen': {
         element: document.getElementById('identify-dialogue-box'),
-        advance: () => {
-            if (gameState.identifyPhase === 'fears') {
-                // Fear sequence - different states
-                if (gameState.fearConclusionIndex > 0 || (gameState.crossedClusters >= fearData.crossOutResponses.length && gameState.additionalClusterIndex >= fearData.additionalClusters.length)) {
-                    advanceFearConclusion();
-                } else if (gameState.fearIntroIndex < fearData.intro.length) {
-                    advanceFearIntro();
-                } else if (!gameState.crossingEnabled) {
-                    advanceFearClusterDialogue();
-                }
-                // If crossing is enabled, don't advance - player must click words
-            } else if (gameState.currentIdentifyEvidence) {
-                advanceIdentifyEvidenceDialogue();
-            } else if (gameState.identifyPhase !== 'grid') {
-                advanceIdentifyDialogue();
-            }
-        }
+        advance: () => identifyScreen.advance()
     }
 };
 
@@ -3048,7 +3036,7 @@ elements.witnessList.querySelectorAll('.witness-item').forEach(item => {
 
 // Identify Suspect button
 elements.identifySuspectBtn.addEventListener('click', () => {
-    startIdentifySuspect();
+    identifyScreen.start();
 });
 
 // Identify grid item click handlers
@@ -3056,7 +3044,7 @@ elements.identifyGrid.querySelectorAll('.identify-item').forEach(item => {
     item.addEventListener('click', () => {
         if (!item.disabled && !item.classList.contains('revealed')) {
             playClickSound();
-            handleIdentifyItemClick(item.dataset.item);
+            identifyScreen.handleItemClick(item.dataset.item);
         }
     });
 });
@@ -3100,74 +3088,8 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     });
     elements.witnessList.style.display = 'flex';
     elements.witnessImage.style.display = 'none';
-    // Reset identify suspect state
-    gameState.identifyDialogueIndex = 0;
-    gameState.identifyPhase = 'intro';
-    gameState.revealedEvidence = [];
-    gameState.currentIdentifyEvidence = null;
-    gameState.identifyEvidenceDialogueIndex = 0;
-    // Reset fear sequence state
-    gameState.fearIntroIndex = 0;
-    gameState.fearClusterIndex = 0;
-    gameState.fearDialogueIndex = 0;
-    gameState.crossingEnabled = false;
-    gameState.crossedClusters = 0;
-    gameState.additionalClusterIndex = 0;
-    gameState.fearConclusionIndex = 0;
-    gameState.activeClusterIndex = 0;
-    gameState.clusterDialogueStarted = false;
-    gameState.depressionLevel = 0;
-    if (gameState.floatingFearsController) {
-        gameState.floatingFearsController.clear();
-        gameState.floatingFearsController = null;
-    }
-    // Reset depression/recovery classes
-    elements.identifyArea.classList.remove(
-        'depression-1', 'depression-2', 'depression-3', 'depression-4',
-        'recovery-1', 'recovery-2', 'recovery-3', 'recovery-4'
-    );
-    // Reset fear words container
-    elements.fearWordsContainer.innerHTML = '';
-    elements.fearWordsContainer.style.display = 'none';
-    elements.fearWordsContainer.style.opacity = '1';
-    // Reset dreams state
-    gameState.revealedDreams = [];
-    gameState.dreamsConclusionIndex = 0;
-    elements.dreamsContainer.innerHTML = '';
-    elements.dreamsContainer.style.display = 'none';
-    elements.dreamsContainer.style.opacity = '1';
-    // Reset finale state
-    gameState.finaleDialogueIndex = 0;
-    gameState.wrongAnswerCount = 0;
-    if (gameState.finaleFloatingController) {
-        gameState.finaleFloatingController.clear();
-        gameState.finaleFloatingController = null;
-    }
-    elements.finaleInputContainer.style.display = 'none';
-    elements.finaleCharacters.style.display = 'none';
-    elements.finaleDialogueBox.style.display = 'none';
-    elements.finaleMol.classList.remove('bean-up');
-    elements.finaleWho.classList.remove('bean-up', 'visible');
-    elements.fadeOverlay.classList.remove('active');
-    elements.fadeOverlayText.classList.remove('visible');
-    elements.fadeOverlayText.textContent = '';
-    // Restore identify screen elements
-    elements.identifyArea.style.display = '';
-    elements.identifyArea.classList.remove('finale-mode');
-    elements.identifyActions.style.display = '';
-    elements.identifyEnterHint.style.display = '';
-    elements.identifyPortrait.style.display = '';
-    elements.identifyPortrait.classList.remove('bean-up');
-    elements.identifyLuisa.style.display = 'none';
-    elements.identifyLuisa.classList.remove('visible', 'bean-up');
-    elements.identifyDialogueBox.style.display = '';
-    elements.identifyDialogueText.classList.remove('low-opacity-text');
-    // Reset identify grid
-    elements.identifyGrid.querySelectorAll('.identify-item').forEach(item => {
-        item.disabled = false;
-        item.classList.remove('revealed');
-    });
-    elements.identifyGrid.style.display = 'none';
+    // Reset identify screen
+    identifyScreen.reset();
     // Stop final music if playing
     audioManager.pauseCurrent();
     if (audioManager.currentTrack) {
@@ -3194,23 +3116,7 @@ document.addEventListener('keydown', (e) => {
             'witness-screen': () => {
                 witnessScreen.advance(false);
             },
-            'identify-screen': () => {
-                if (gameState.identifyPhase === 'fears') {
-                    // Fear sequence - different states
-                    if (gameState.fearConclusionIndex > 0 || gameState.crossedClusters >= fearData.crossOutResponses.length) {
-                        advanceFearConclusion();
-                    } else if (gameState.fearIntroIndex < fearData.intro.length) {
-                        advanceFearIntro();
-                    } else if (!gameState.crossingEnabled) {
-                        advanceFearClusterDialogue();
-                    }
-                    // If crossing is enabled, don't advance with Enter - player must click words
-                } else if (gameState.currentIdentifyEvidence) {
-                    advanceIdentifyEvidenceDialogue(false);
-                } else if (gameState.identifyPhase !== 'grid') {
-                    advanceIdentifyDialogue(false);
-                }
-            }
+            'identify-screen': () => identifyScreen.advance(false)
         };
 
         const handler = screenHandlers[gameState.currentScreen];
