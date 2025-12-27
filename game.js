@@ -669,6 +669,11 @@ function playPapersSound() {
     audioManager.playSfx('papers');
 }
 
+// ============================================
+// LEADS HANDLING
+// ============================================
+// NOTE: Most functions have been moved to screens/leads-screen.js
+// addLeadToList is still used by evidence and witness screens
 async function addLeadToList(leadText) {
     const li = document.createElement('li');
     elements.leadsList.appendChild(li);
@@ -677,6 +682,9 @@ async function addLeadToList(leadText) {
         gameState.collectedLeads.push(leadText);
     }
 }
+
+// The following functions have been moved to screens/leads-screen.js:
+/*
 
 async function showHairChaos() {
     const colors = [
@@ -892,6 +900,7 @@ function startLeads() {
         processLeads();
     }
 }
+*/
 
 // ============================================
 // PHYSICAL EVIDENCE HANDLING
@@ -2923,7 +2932,7 @@ document.querySelectorAll('#menu-screen .btn').forEach(btn => {
 
 // Leads button
 elements.leadsBtn.addEventListener('click', () => {
-    startLeads();
+    leadsScreen.start();
 });
 
 // Back to menu button (from leads)
@@ -2935,7 +2944,7 @@ elements.backToMenuBtn.addEventListener('click', () => {
 // Unified click-to-continue handlers
 const clickHandlerMap = {
     'dialogue-screen': { element: elements.dialogueBox, advance: () => introScreen.advance() },
-    'leads-screen': { element: document.getElementById('leads-dialogue-box'), advance: advanceLeads },
+    'leads-screen': { element: document.getElementById('leads-dialogue-box'), advance: () => leadsScreen.advance() },
     'evidence-screen': {
         element: document.getElementById('evidence-dialogue-box'),
         advance: () => {
@@ -3075,9 +3084,8 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     gameState.skipTyping = false;
     // Reset intro screen
     introScreen.reset();
-    gameState.leadsIndex = 0;
-    gameState.leadsComplete = false;
-    gameState.collectedLeads = [];
+    // Reset leads screen
+    leadsScreen.reset();
     // Reset evidence state
     gameState.evidenceIntroComplete = false;
     gameState.evidenceIntroIndex = 0;
@@ -3190,7 +3198,7 @@ document.addEventListener('keydown', (e) => {
         // Map screens to their advance functions
         const screenHandlers = {
             'dialogue-screen': () => introScreen.advance(),
-            'leads-screen': () => advanceLeads(false),
+            'leads-screen': () => leadsScreen.advance(false),
             'evidence-screen': () => {
                 if (!gameState.evidenceIntroComplete) {
                     advanceEvidenceIntro(false);
