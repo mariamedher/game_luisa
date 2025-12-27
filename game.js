@@ -350,11 +350,39 @@ function showScreen(screenId) {
     }
 }
 
-function hideAllInputs() {
-    elements.nameInputContainer.style.display = 'none';
-    elements.confirmationContainer.style.display = 'none';
-    elements.actionContainer.style.display = 'none';
-    elements.enterHint.style.display = 'none';
+function hideInputs(screen = gameState.currentScreen) {
+    // Define what to hide for each screen
+    const hideActions = {
+        'dialogue-screen': () => {
+            elements.nameInputContainer.style.display = 'none';
+            elements.confirmationContainer.style.display = 'none';
+            elements.actionContainer.style.display = 'none';
+            elements.enterHint.style.display = 'none';
+        },
+        'leads-screen': () => {
+            elements.leadsEnterHint.style.display = 'none';
+            elements.leadsChoices.style.display = 'none';
+            elements.leadsContinueBtn.style.display = 'none';
+        },
+        'evidence-screen': () => {
+            elements.evidenceEnterHint.style.display = 'none';
+            elements.evidenceChoices.style.display = 'none';
+            elements.evidenceContinueBtn.style.display = 'none';
+        },
+        'witness-screen': () => {
+            elements.witnessEnterHint.style.display = 'none';
+            elements.witnessChoices.style.display = 'none';
+            elements.witnessContinueBtn.style.display = 'none';
+        },
+        'identify-screen': () => {
+            elements.identifyEnterHint.style.display = 'none';
+            elements.identifyChoices.style.display = 'none';
+            elements.identifyContinueBtn.style.display = 'none';
+        }
+    };
+
+    const action = hideActions[screen];
+    if (action) action();
 }
 
 // Check if all leads have been collected and enable the Identify Suspect button
@@ -670,7 +698,7 @@ async function processDialogue() {
     }
 
     const dialogue = dialogueSequence[gameState.dialogueIndex];
-    hideAllInputs();
+    hideInputs('dialogue-screen');
     gameState.waitingForInput = false;
 
     // Apply effects
@@ -720,7 +748,7 @@ function advanceDialogue(playSound = true) {
 }
 
 async function handleNameConfirmation() {
-    hideAllInputs();
+    hideInputs('dialogue-screen');
     await typeText(`Is your name ${gameState.playerName}?`);
     elements.confirmationContainer.style.display = 'flex';
     elements.confirmText.textContent = '';
@@ -731,12 +759,6 @@ async function handleNameConfirmation() {
 // ============================================
 function playPapersSound() {
     audioManager.playSfx('papers');
-}
-
-function hideLeadsInputs() {
-    elements.leadsEnterHint.style.display = 'none';
-    elements.leadsChoices.style.display = 'none';
-    elements.leadsContinueBtn.style.display = 'none';
 }
 
 async function addLeadToList(leadText) {
@@ -784,7 +806,7 @@ async function processLeads() {
     }
 
     const item = leadsSequence[gameState.leadsIndex];
-    hideLeadsInputs();
+    hideInputs('leads-screen');
     gameState.waitingForInput = false;
 
     switch (item.action) {
@@ -868,7 +890,7 @@ async function processLeads() {
                 btn.textContent = choiceText;
                 btn.addEventListener('click', async () => {
                     playClickSound();
-                    hideLeadsInputs();
+                    hideInputs('leads-screen');
 
                     const response = item.responses[index];
                     if (Array.isArray(response)) {
@@ -968,12 +990,6 @@ function startLeads() {
 // ============================================
 // PHYSICAL EVIDENCE HANDLING
 // ============================================
-function hideEvidenceInputs() {
-    elements.evidenceEnterHint.style.display = 'none';
-    elements.evidenceChoices.style.display = 'none';
-    elements.evidenceContinueBtn.style.display = 'none';
-}
-
 function setEvidenceGridEnabled(enabled) {
     const items = elements.evidenceGrid.querySelectorAll('.evidence-item');
     items.forEach(item => {
@@ -1026,7 +1042,7 @@ async function processEvidenceIntro() {
         gameState.evidenceIntroComplete = true;
         setEvidenceGridEnabled(true);
         elements.evidenceDialogueText.textContent = 'Select an evidence item to examine.';
-        hideEvidenceInputs();
+        hideInputs('evidence-screen');
         return;
     }
 
@@ -1037,7 +1053,7 @@ async function processEvidenceIntro() {
     }
 
     const item = evidenceData.intro[gameState.evidenceIntroIndex];
-    hideEvidenceInputs();
+    hideInputs('evidence-screen');
     gameState.waitingForInput = false;
 
     // Check for strawberry jam line (index 2) - show jam sprite
@@ -1099,7 +1115,7 @@ async function processEvidenceDialogue() {
     }
 
     const item = dialogueList[gameState.evidenceDialogueIndex];
-    hideEvidenceInputs();
+    hideInputs('evidence-screen');
     gameState.waitingForInput = false;
 
     // Apply effects before typing
@@ -1245,7 +1261,7 @@ async function finishEvidence() {
     // Update grid
     setEvidenceGridEnabled(true);
     elements.evidenceDialogueText.textContent = 'Select another evidence item to examine.';
-    hideEvidenceInputs();
+    hideInputs('evidence-screen');
 
     // Check if all evidence is complete
     if (gameState.completedEvidence.length >= evidenceData.items.length) {
@@ -1302,12 +1318,6 @@ function setWitnessListEnabled(enabled) {
     });
 }
 
-function hideWitnessInputs() {
-    elements.witnessEnterHint.style.display = 'none';
-    elements.witnessChoices.style.display = 'none';
-    elements.witnessContinueBtn.style.display = 'none';
-}
-
 function startWitness() {
     playPapersSound();
     showScreen('witness-screen');
@@ -1348,12 +1358,12 @@ async function processWitnessIntro() {
         gameState.witnessIntroComplete = true;
         setWitnessListEnabled(true);
         elements.witnessDialogueText.textContent = 'Select a witness to interview.';
-        hideWitnessInputs();
+        hideInputs('witness-screen');
         return;
     }
 
     const item = witnessData.intro[gameState.witnessIntroIndex];
-    hideWitnessInputs();
+    hideInputs('witness-screen');
     gameState.waitingForInput = false;
 
     await typeText(item.text, item.loud, elements.witnessDialogueText);
@@ -1430,7 +1440,7 @@ async function processWitnessDialogue() {
     }
 
     const item = witness.dialogue[gameState.witnessDialogueIndex];
-    hideWitnessInputs();
+    hideInputs('witness-screen');
     gameState.waitingForInput = false;
 
     // Play sound effect if specified
@@ -1849,7 +1859,7 @@ async function finishWitness() {
     // Update list
     setWitnessListEnabled(true);
     elements.witnessDialogueText.textContent = 'Select another witness to interview.';
-    hideWitnessInputs();
+    hideInputs('witness-screen');
 
     // Check if all witnesses interviewed
     if (gameState.completedWitnesses.length >= witnessData.witnesses.length) {
@@ -1904,7 +1914,7 @@ function startIdentifySuspect() {
 
     // Clear dialogue
     elements.identifyDialogueText.textContent = '';
-    hideIdentifyInputs();
+    hideInputs('identify-screen');
 
     // Hide leads list during identify section
     elements.persistentLeads.style.display = 'none';
@@ -1913,14 +1923,8 @@ function startIdentifySuspect() {
     processIdentifyDialogue();
 }
 
-function hideIdentifyInputs() {
-    elements.identifyEnterHint.style.display = 'none';
-    elements.identifyChoices.style.display = 'none';
-    elements.identifyContinueBtn.style.display = 'none';
-}
-
 async function processIdentifyDialogue() {
-    hideIdentifyInputs();
+    hideInputs('identify-screen');
     gameState.waitingForInput = false;
 
     let dialogue;
@@ -2122,7 +2126,7 @@ async function handleIdentifyItemClick(itemId) {
 }
 
 async function processIdentifyEvidenceDialogue() {
-    hideIdentifyInputs();
+    hideInputs('identify-screen');
 
     const itemId = gameState.currentIdentifyEvidence;
     const itemData = identifyData.evidenceItems[itemId];
@@ -2284,7 +2288,7 @@ function startFearSequence() {
 
 // Process fear intro dialogue - auto-advances without waiting for input
 async function processFearIntro() {
-    hideIdentifyInputs();
+    hideInputs('identify-screen');
 
     if (gameState.fearIntroIndex >= fearData.intro.length) {
         // Intro complete, move to showing word clusters
@@ -2565,7 +2569,7 @@ async function showAdditionalCluster() {
 
 // Process the fear conclusion dialogue - auto-advances
 async function processFearConclusion() {
-    hideIdentifyInputs();
+    hideInputs('identify-screen');
 
     // Stop floating fears
     if (gameState.floatingFearsController) {
@@ -2996,7 +3000,7 @@ elements.yesBtn.addEventListener('click', () => {
 
 elements.noBtn.addEventListener('click', () => {
     playClickSound();
-    hideAllInputs();
+    hideInputs('dialogue-screen');
     elements.nameInputContainer.style.display = 'flex';
     elements.nameInput.value = '';
     elements.nameInput.focus();
@@ -3278,7 +3282,7 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     elements.dialogueText.innerHTML = '';
     elements.leadsList.innerHTML = '';
     elements.persistentLeads.style.display = 'none';
-    hideAllInputs();
+    hideInputs('dialogue-screen');
     // Go back to start screen
     showScreen('start-screen');
 });
@@ -3334,7 +3338,7 @@ document.addEventListener('keydown', (e) => {
         gameState.skipTyping = true;
         gameState.isTyping = false;
         gameState.waitingForInput = false;
-        hideAllInputs();
+        hideInputs('dialogue-screen');
         showScreen('title-screen');
     }
 
