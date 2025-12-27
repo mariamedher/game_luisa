@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title?</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- SVG Noise Filter for depression effect -->
+    <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="noise-filter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch" result="noise"/>
+                <feColorMatrix type="saturate" values="0" in="noise" result="graynoise"/>
+                <feBlend in="SourceGraphic" in2="graynoise" mode="multiply" result="blend"/>
+                <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="crt-overlay"></div>
+
+    <div id="game-container">
+        <!-- START SCREEN -->
+        <div id="start-screen" class="screen active">
+            <button id="start-btn" class="btn">START</button>
+        </div>
+
+        <!-- DIALOGUE SCREEN -->
+        <div id="dialogue-screen" class="screen">
+            <div id="dialogue-area">
+                <img id="character-portrait" src="images/Mol.png" alt="Mol">
+                <div id="dialogue-box">
+                    <div id="dialogue-text"></div>
+                </div>
+            </div>
+            <div id="name-input-container">
+                <input type="text" id="name-input" placeholder="Enter your name..." maxlength="20">
+                <button id="submit-name-btn" class="btn btn-small">Submit</button>
+            </div>
+            <div id="confirmation-container">
+                <p id="confirm-text"></p>
+                <div class="btn-group">
+                    <button id="yes-btn" class="btn btn-small">Yes</button>
+                    <button id="no-btn" class="btn btn-small">No</button>
+                </div>
+            </div>
+            <div id="action-container">
+                <button id="action-btn" class="btn btn-small">Continue</button>
+            </div>
+            <div id="enter-hint">Press Enter</div>
+        </div>
+
+        <!-- TITLE SCREEN -->
+        <div id="title-screen" class="screen">
+            <img id="title-image" src="images/title.png" alt="Who is Daphne?" onerror="this.style.display='none'; document.getElementById('title-text').style.display='block';">
+            <h1 id="title-text" style="display: none;">Title?</h1>
+            <button id="title-continue-btn" class="btn btn-small" style="margin-top: -20px;">Continue</button>
+        </div>
+
+        <!-- MENU SCREEN -->
+        <div id="menu-screen" class="screen">
+            <div id="menu-content">
+                <h2 style="margin-bottom: 40px; letter-spacing: 5px;">CASE FILES</h2>
+                <div class="menu-buttons">
+                    <button id="leads-btn" class="btn">Leads</button>
+                    <button id="evidence-btn" class="btn">Physical Evidence</button>
+                    <button id="witness-btn" class="btn">Witness Reports</button>
+                    <button id="identify-suspect-btn" class="btn" disabled>Identify Suspect</button>
+                    <button id="exit-btn" class="btn">Exit</button>
+                </div>
+            </div>
+            <div id="mol-idle-container">
+                <div id="mol-speech-bubble">
+                    <span id="mol-idle-text"></span>
+                    <button id="give-coffee-btn">Give Coffee</button>
+                </div>
+                <img class="menu-mol" src="images/Mol.png" alt="Mol">
+            </div>
+        </div>
+
+        <!-- LEADS SCREEN -->
+        <div id="leads-screen" class="screen">
+            <div id="leads-center">
+                <div id="leads-image-container">
+                    <img id="folder-image" src="images/folder.png" alt="Case Folder">
+                    <img id="overlay-image" src="" alt="">
+                </div>
+                <div id="leads-dialogue-box">
+                    <div id="leads-dialogue-text"></div>
+                </div>
+                <div id="leads-actions">
+                    <div id="leads-enter-hint">Press Enter</div>
+                    <div id="leads-choices"></div>
+                    <button id="leads-continue-btn" class="btn btn-small" style="display: none;">Continue</button>
+                </div>
+            </div>
+            <img id="leads-mol" src="images/Mol.png" alt="Mol">
+            <button id="back-to-menu-btn" class="btn btn-small">Back to Menu</button>
+        </div>
+
+        <!-- PHYSICAL EVIDENCE SCREEN -->
+        <div id="evidence-screen" class="screen">
+            <div id="evidence-content">
+                <div id="evidence-grid">
+                    <button class="evidence-item" data-evidence="candle">
+                        <svg class="evidence-icon" viewBox="0 0 60 60">
+                            <!-- Cylinder/Candle -->
+                            <ellipse cx="30" cy="12" rx="15" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="15" y1="12" x2="15" y2="48" stroke="currentColor" stroke-width="2"/>
+                            <line x1="45" y1="12" x2="45" y2="48" stroke="currentColor" stroke-width="2"/>
+                            <ellipse cx="30" cy="48" rx="15" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="30" y1="6" x2="30" y2="2" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="30" cy="2" r="2" fill="currentColor"/>
+                        </svg>
+                        <span class="evidence-label">Evidence 1</span>
+                    </button>
+                    <button class="evidence-item" data-evidence="d20">
+                        <svg class="evidence-icon" viewBox="0 0 60 60">
+                            <!-- D20 Dice -->
+                            <polygon points="30,5 55,20 55,40 30,55 5,40 5,20" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="30" y1="5" x2="30" y2="55" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="5" y1="20" x2="55" y2="40" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="55" y1="20" x2="5" y2="40" stroke="currentColor" stroke-width="1.5"/>
+                            <text x="30" y="35" text-anchor="middle" fill="currentColor" font-size="12" font-weight="bold">20</text>
+                        </svg>
+                        <span class="evidence-label">Evidence 2</span>
+                    </button>
+                    <button class="evidence-item" data-evidence="manuscript">
+                        <svg class="evidence-icon" viewBox="0 0 60 60">
+                            <!-- Document/Manuscript -->
+                            <rect x="10" y="5" width="40" height="50" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+                            <line x1="17" y1="15" x2="43" y2="15" stroke="currentColor" stroke-width="2"/>
+                            <line x1="17" y1="23" x2="43" y2="23" stroke="currentColor" stroke-width="2"/>
+                            <line x1="17" y1="31" x2="43" y2="31" stroke="currentColor" stroke-width="2"/>
+                            <line x1="17" y1="39" x2="35" y2="39" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="evidence-label">Evidence 3</span>
+                    </button>
+                    <button class="evidence-item" data-evidence="harpstring">
+                        <svg class="evidence-icon" viewBox="0 0 60 60">
+                            <!-- Wavy Line/Harp String -->
+                            <path d="M10,30 Q20,15 30,30 Q40,45 50,30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            <circle cx="10" cy="30" r="3" fill="currentColor"/>
+                            <circle cx="50" cy="30" r="3" fill="currentColor"/>
+                        </svg>
+                        <span class="evidence-label">Evidence 4</span>
+                    </button>
+                    <button class="evidence-item" data-evidence="shoppinglist">
+                        <svg class="evidence-icon" viewBox="0 0 60 60">
+                            <!-- Notepad/Shopping List -->
+                            <rect x="12" y="8" width="36" height="44" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+                            <line x1="12" y1="16" x2="48" y2="16" stroke="currentColor" stroke-width="2"/>
+                            <rect x="17" y="22" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="27" y1="25" x2="40" y2="25" stroke="currentColor" stroke-width="2"/>
+                            <rect x="17" y="32" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="27" y1="35" x2="40" y2="35" stroke="currentColor" stroke-width="2"/>
+                            <rect x="17" y="42" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="27" y1="45" x2="40" y2="45" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="evidence-label">Evidence 5</span>
+                    </button>
+                </div>
+                <div id="evidence-dialogue-box">
+                    <div id="evidence-dialogue-text"></div>
+                </div>
+                <div id="evidence-actions">
+                    <div id="evidence-enter-hint">Press Enter</div>
+                    <div id="evidence-choices"></div>
+                    <button id="evidence-continue-btn" class="btn btn-small" style="display: none;">Continue</button>
+                </div>
+            </div>
+            <img id="evidence-mol" src="images/Mol.png" alt="Mol">
+            <button id="evidence-back-btn" class="btn btn-small">Back to Menu</button>
+        </div>
+
+        <!-- WITNESS REPORTS SCREEN -->
+        <div id="witness-screen" class="screen">
+            <div id="witness-content">
+                <div id="witness-image-container">
+                    <img id="witness-image" src="" alt="">
+                </div>
+                <div id="witness-list">
+                    <button class="witness-item" data-witness="glorp">
+                        <svg class="witness-icon" viewBox="0 0 40 40">
+                            <!-- Alien icon -->
+                            <ellipse cx="20" cy="15" rx="12" ry="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <ellipse cx="14" cy="13" rx="4" ry="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <ellipse cx="26" cy="13" rx="4" ry="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="14" cy="13" r="2" fill="currentColor"/>
+                            <circle cx="26" cy="13" r="2" fill="currentColor"/>
+                            <path d="M16,22 Q20,26 24,22" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="20" y1="25" x2="20" y2="35" stroke="currentColor" stroke-width="2"/>
+                            <line x1="15" y1="35" x2="25" y2="35" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="witness-label">Weirdly shaped individual</span>
+                    </button>
+                    <button class="witness-item" data-witness="cait">
+                        <svg class="witness-icon" viewBox="0 0 40 40">
+                            <!-- Flower icon (no stem) -->
+                            <circle cx="20" cy="20" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="20" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="27" cy="16" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="27" cy="24" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="20" cy="28" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="13" cy="24" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="13" cy="16" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        <span class="witness-label">Cutest thing that squeaks</span>
+                    </button>
+                    <button class="witness-item" data-witness="couple">
+                        <svg class="witness-icon" viewBox="0 0 40 40">
+                            <!-- Goblet/Wine glass icon -->
+                            <ellipse cx="20" cy="8" rx="10" ry="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M10,8 Q10,20 20,22 Q30,20 30,8" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="20" y1="22" x2="20" y2="32" stroke="currentColor" stroke-width="2"/>
+                            <ellipse cx="20" cy="35" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="witness-label">A couple passing by</span>
+                    </button>
+                </div>
+                <div id="witness-dialogue-box">
+                    <div id="witness-dialogue-text"></div>
+                </div>
+                <div id="witness-actions">
+                    <div id="witness-enter-hint">Press Enter</div>
+                    <div id="witness-choices"></div>
+                    <button id="witness-continue-btn" class="btn btn-small" style="display: none;">Continue</button>
+                </div>
+            </div>
+            <img id="witness-mol" src="images/Mol.png" alt="Mol">
+            <button id="witness-back-btn" class="btn btn-small">Back to Menu</button>
+        </div>
+
+        <!-- IDENTIFY SUSPECT SCREEN -->
+        <div id="identify-screen" class="screen">
+            <div id="identify-area">
+                <div id="identify-characters">
+                    <img id="identify-portrait" src="images/Mol.png" alt="Mol">
+                    <img id="identify-luisa" src="images/who.png" alt="Luisa" style="display: none;">
+                </div>
+                <div id="identify-dialogue-box">
+                    <div id="identify-dialogue-text"></div>
+                </div>
+            </div>
+            <!-- Evidence grid for "likes" section - hidden initially -->
+            <div id="identify-grid" style="display: none;">
+                <button class="identify-item" data-item="candle">
+                    <svg class="identify-icon" viewBox="0 0 60 60">
+                        <ellipse cx="30" cy="12" rx="15" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <line x1="15" y1="12" x2="15" y2="48" stroke="currentColor" stroke-width="2"/>
+                        <line x1="45" y1="12" x2="45" y2="48" stroke="currentColor" stroke-width="2"/>
+                        <ellipse cx="30" cy="48" rx="15" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <line x1="30" y1="6" x2="30" y2="2" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="30" cy="2" r="2" fill="currentColor"/>
+                    </svg>
+                    <span class="identify-label">Apple Cinnamon Scented Candle</span>
+                </button>
+                <button class="identify-item" data-item="d20">
+                    <svg class="identify-icon" viewBox="0 0 60 60">
+                        <polygon points="30,5 55,20 55,40 30,55 5,40 5,20" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <line x1="30" y1="5" x2="30" y2="55" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="5" y1="20" x2="55" y2="40" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="55" y1="20" x2="5" y2="40" stroke="currentColor" stroke-width="1.5"/>
+                        <text x="30" y="35" text-anchor="middle" fill="currentColor" font-size="12" font-weight="bold">20</text>
+                    </svg>
+                    <span class="identify-label">A D20 Dice (DnD)</span>
+                </button>
+                <button class="identify-item" data-item="manuscript">
+                    <svg class="identify-icon" viewBox="0 0 60 60">
+                        <rect x="10" y="5" width="40" height="50" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+                        <line x1="17" y1="15" x2="43" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <line x1="17" y1="23" x2="43" y2="23" stroke="currentColor" stroke-width="2"/>
+                        <line x1="17" y1="31" x2="43" y2="31" stroke="currentColor" stroke-width="2"/>
+                        <line x1="17" y1="39" x2="35" y2="39" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span class="identify-label">Digital Questionable Manuscript</span>
+                </button>
+                <button class="identify-item" data-item="harpstring">
+                    <svg class="identify-icon" viewBox="0 0 60 60">
+                        <path d="M10,30 Q20,15 30,30 Q40,45 50,30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="10" cy="30" r="3" fill="currentColor"/>
+                        <circle cx="50" cy="30" r="3" fill="currentColor"/>
+                    </svg>
+                    <span class="identify-label">Harp String (Water-damaged)</span>
+                </button>
+                <button class="identify-item" data-item="snack">
+                    <svg class="identify-icon" viewBox="0 0 60 60">
+                        <rect x="12" y="8" width="36" height="44" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+                        <line x1="12" y1="16" x2="48" y2="16" stroke="currentColor" stroke-width="2"/>
+                        <rect x="17" y="22" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="27" y1="25" x2="40" y2="25" stroke="currentColor" stroke-width="2"/>
+                        <rect x="17" y="32" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="27" y1="35" x2="40" y2="35" stroke="currentColor" stroke-width="2"/>
+                        <rect x="17" y="42" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="27" y1="45" x2="40" y2="45" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span class="identify-label">A Delicious, Sweet and Savoury Snack</span>
+                </button>
+            </div>
+            <div id="identify-actions">
+                <div id="identify-enter-hint">Press Enter</div>
+                <div id="identify-choices"></div>
+                <button id="identify-continue-btn" class="btn btn-small" style="display: none;">Continue</button>
+            </div>
+            <!-- Fear words container for crossing out -->
+            <div id="fear-words-container" style="display: none;"></div>
+            <!-- Dreams container for hover/click reveal -->
+            <div id="dreams-container" style="display: none;"></div>
+            <!-- Finale name input -->
+            <div id="finale-input-container" style="display: none;">
+                <input type="text" id="finale-name-input" placeholder="Who is it?" maxlength="50">
+                <button id="finale-submit-btn" class="btn btn-small">Submit</button>
+            </div>
+            <!-- Finale characters container -->
+            <div id="finale-characters" style="display: none;">
+                <img src="images/Mol.png" alt="Mol" id="finale-mol" class="character-sprite bouncing">
+                <img src="images/who.png" alt="Who" id="finale-who" class="character-sprite bouncing">
+            </div>
+            <!-- Finale dialogue box (centered below characters) -->
+            <div id="finale-dialogue-box" style="display: none;">
+                <p id="finale-dialogue-text"></p>
+            </div>
+        </div>
+
+        <!-- PERSISTENT LEADS LIST -->
+        <div id="persistent-leads">
+            <h3>LEADS</h3>
+            <ul id="leads-list"></ul>
+        </div>
+
+        <!-- END MESSAGE -->
+        <div id="end-screen" class="screen">
+            <p id="end-message">Thanks for playing.</p>
+            <button id="play-again-btn" class="btn" style="margin-top: 40px;">Play Again?</button>
+        </div>
+
+        <!-- Fade to black overlay -->
+        <div id="fade-overlay">
+            <div id="fade-overlay-text"></div>
+        </div>
+
+        <!-- DEBUG PANEL - Remove before release -->
+        <div id="debug-panel">
+            <button id="debug-toggle">DBG</button>
+            <div id="debug-buttons">
+                <button data-debug="fears">Fears</button>
+                <button data-debug="dreams">Dreams</button>
+                <button data-debug="finale">Finale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="bgm" loop>
+        <source src="audio/bgm/background_music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-click">
+        <source src="audio/sfx/click.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-papers">
+        <source src="audio/sfx/papers.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-dice">
+        <source src="audio/sfx/dice_roll.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-harp">
+        <source src="audio/sfx/harp_pluck.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-munch">
+        <source src="audio/sfx/munch.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-clack">
+        <source src="audio/sfx/clack.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-sparkle">
+        <source src="audio/sfx/sparkle.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-surprise">
+        <source src="audio/sfx/surprise.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-squeak">
+        <source src="audio/sfx/squeak.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-helicopter">
+        <source src="audio/sfx/helicopter.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-snap">
+        <source src="audio/sfx/snap.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-slurp">
+        <source src="audio/sfx/slurp.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-alien">
+        <source src="audio/sfx/alien.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-spaceship">
+        <source src="audio/sfx/spaceship.mp3" type="audio/mpeg">
+    </audio>
+    <!-- Witness background music -->
+    <audio id="bgm-cait" loop>
+        <source src="audio/bgm/musiccait.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bgm-glorp" loop>
+        <source src="audio/bgm/glorpmusic.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bgm-couple" loop>
+        <source src="audio/bgm/musiccouple.mp3" type="audio/mpeg">
+    </audio>
+    <!-- Final sequence music -->
+    <audio id="bgm-final" loop>
+        <source src="audio/bgm/final.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Dialogue Data (edit dialogues.js to modify story content) -->
+    <script src="dialogues.js"></script>
+    <!-- Game Logic -->
+    <script src="game.js"></script>
+</body>
+</html>
