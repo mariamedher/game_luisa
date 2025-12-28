@@ -40,7 +40,7 @@ class IntroScreen {
     async processDialogue() {
         if (this.state.dialogueIndex >= this.dialogue.length) {
             // End of intro - show title screen
-            showScreen('title-screen');
+            titleScreen.show();
             return;
         }
 

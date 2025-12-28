@@ -890,7 +890,7 @@ class IdentifyScreen {
             await audioManager.fadeOut(audioManager.currentTrack.element, 3000);
 
             await new Promise(resolve => setTimeout(resolve, 4000));
-            showScreen('end-screen');
+            endScreen.show();
             this.elements.fadeOverlay.classList.remove('active');
             return;
         }
@@ -931,7 +931,7 @@ class IdentifyScreen {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
-            showScreen('end-screen');
+            endScreen.show();
             this.elements.fadeOverlay.classList.remove('active');
             this.elements.fadeOverlayText.textContent = '';
         } else {
