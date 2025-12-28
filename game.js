@@ -286,9 +286,17 @@ function isTextLoud(text) {
 // ============================================
 // TYPEWRITER EFFECT WITH ANIMALESE
 // ============================================
-// Options: { loud, target, speaker, pitch }
-// - speaker: 'mol', 'cait', 'goblin', 'couple' - adds CSS class for color
-// - pitch: 'normal', 'high', 'low', 'veryHigh' - changes animalese pitch
+/**
+ * Displays text with typewriter effect and animalese sounds
+ * @param {string} text - The text to display
+ * @param {boolean|Object} isLoudOrOptions - Loud flag (old API) or options object (new API)
+ *   Options: { loud, target, speaker, pitch }
+ *   - loud: Force loud effect regardless of text
+ *   - target: DOM element to type into (default: elements.dialogueText)
+ *   - speaker: 'mol', 'cait', 'goblin', 'couple' - adds CSS class for color
+ *   - pitch: 'normal', 'high', 'low', 'veryHigh' - changes animalese pitch
+ * @param {HTMLElement} targetElement - Target element (old API, for backwards compatibility)
+ */
 async function typeText(text, isLoudOrOptions = false, targetElement = null) {
     gameState.isTyping = true;
     gameState.skipTyping = false;
@@ -369,10 +377,40 @@ async function typeText(text, isLoudOrOptions = false, targetElement = null) {
         await new Promise(resolve => setTimeout(resolve, delay));
     }
 
+    // If skipped, show remaining text instantly with proper styling
+    if (gameState.skipTyping && target.textContent.length < text.length) {
+        const remainingText = text.substring(target.textContent.length);
+
+        // Preserve styling for remaining text
+        let currentInsideAsterisk = insideAsterisk;
+        for (let char of remainingText) {
+            if (char === '*') {
+                currentInsideAsterisk = !currentInsideAsterisk;
+            }
+
+            const span = document.createElement('span');
+            span.textContent = char;
+            if (autoLoud) {
+                span.classList.add('text-loud');
+            }
+            if (currentInsideAsterisk || char === '*') {
+                span.classList.add('text-action');
+            }
+            if (speaker && speaker !== 'mol') {
+                span.classList.add(`speaker-${speaker}`);
+            }
+            target.appendChild(span);
+        }
+    }
+
     gameState.isTyping = false;
 }
 
-// Silent typing effect for leads list
+/**
+ * Silent typing effect for leads list (no sound)
+ * @param {string} text - The text to display
+ * @param {HTMLElement} targetElement - The element to type into
+ */
 async function typeSilent(text, targetElement) {
     for (let i = 0; i < text.length; i++) {
         const span = document.createElement('span');
@@ -383,19 +421,22 @@ async function typeSilent(text, targetElement) {
 }
 
 // ============================================
-// DIALOGUE HANDLING
+// SHARED HELPER FUNCTIONS
 // ============================================
-// NOTE: These functions have been moved to screens/intro-screen.js
+// NOTE: These functions are used by multiple screens
 
-// ============================================
-// LEADS HANDLING
-// ============================================
-// NOTE: Most functions have been moved to screens/leads-screen.js
-// addLeadToList is still used by evidence and witness screens
-
+/**
+ * Plays the papers sound effect
+ */
 function playPapersSound() {
     audioManager.playSfx('papers');
 }
+
+/**
+ * Adds a lead to the persistent leads list
+ * Used by: LeadsScreen, EvidenceScreen, WitnessScreen
+ * @param {string} leadText - The lead text to add
+ */
 async function addLeadToList(leadText) {
     const li = document.createElement('li');
     elements.leadsList.appendChild(li);
@@ -405,16 +446,11 @@ async function addLeadToList(leadText) {
     }
 }
 
-// The following functions have been moved to screens/leads-screen.js:
-
-// ============================================
-// PHYSICAL EVIDENCE HANDLING
-// ============================================
-// NOTE: These functions have been moved to screens/evidence-screen.js
-// Kept here for reference during refactoring
-
+/**
+ * Updates the manuscript lead text when returning to menu
+ * NOTE: Called from evidence screen back button handler
+ */
 function updateManuscriptLead() {
-    // Update manuscript lead text when returning to menu
     const manuscript = evidenceData.items.find(e => e.id === 'manuscript');
     if (manuscript && manuscript._needsUpdate && gameState.completedEvidence.includes('manuscript')) {
         const listItems = elements.leadsList.querySelectorAll('li');
@@ -426,18 +462,6 @@ function updateManuscriptLead() {
         manuscript._needsUpdate = false;
     }
 }
-
-// ============================================
-// WITNESS REPORTS HANDLING
-// ============================================
-// NOTE: These functions have been moved to screens/witness-screen.js
-// Kept here for reference during refactoring
-
-// ============================================
-// IDENTIFY SUSPECT SECTION
-// ============================================
-// NOTE: These functions have been moved to screens/identify-screen.js
-// Kept here for reference during refactoring
 
 // ============================================
 // EVENT LISTENERS
@@ -688,7 +712,13 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
 // Unified keyboard input handler
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.target.matches('input')) {
-        // Map screens to their advance functions
+        // If text is currently typing, skip to end
+        if (gameState.isTyping) {
+            gameState.skipTyping = true;
+            return; // Don't advance yet, just finish typing first
+        }
+
+        // If waiting for input, advance to next dialogue
         const screenHandlers = {
             'dialogue-screen': () => introScreen.advance(),
             'leads-screen': () => leadsScreen.advance(false),
@@ -718,6 +748,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================
-// FLOATING PULSING TEXT EFFECT
+// INITIALIZATION
 // ============================================
-// NOTE: Floating text functions have been moved to utils/floating-text.js
+// NOTE: Game is initialized when the user clicks the Start button
+// Audio registration and screen setup happens in the start button event listener
