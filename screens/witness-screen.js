@@ -608,6 +608,8 @@ class WitnessScreen {
             gameState.completedWitnesses = this.state.completedWitnesses;
         }
 
+        updateIdentifySuspectButton();
+
         // Reset state
         this.state.currentWitness = null;
         this.state.dialogueIndex = 0;
@@ -633,6 +635,12 @@ class WitnessScreen {
         // Check if all witnesses interviewed
         if (this.state.completedWitnesses.length >= this.data.witnesses.length) {
             this.elements.dialogueText.textContent = 'All witnesses have been interviewed. Return to the menu to continue.';
+            this.elements.continueBtn.textContent = 'Back to Menu';
+            this.elements.continueBtn.style.display = 'block';
+            this.elements.continueBtn.onclick = () => {
+                audioManager.playSfx('click');
+                showScreen('menu-screen');
+            };
         }
     }
 

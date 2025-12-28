@@ -95,7 +95,7 @@ class IdentifyScreen {
         // Hide leads list during identify section
         this.elements.persistentLeads.style.display = 'none';
 
-        gameState.currentScreen = 'identify-screen';
+        showScreen('identify-screen');
         await this.processDialogue();
     }
 
@@ -164,6 +164,10 @@ class IdentifyScreen {
         if (item.action === 'choice') {
             await typeText(item.text, item.loud, this.elements.dialogueText);
 
+            // Disable waiting for input - player must make a choice
+            this.state.waitingForInput = false;
+            gameState.waitingForInput = false;
+
             this.elements.choices.innerHTML = '';
             this.elements.choices.style.display = 'flex';
 
@@ -198,6 +202,10 @@ class IdentifyScreen {
         for (const item of response) {
             if (item.action === 'choice') {
                 await typeText(item.text, item.loud, this.elements.dialogueText);
+
+                // Disable waiting for input - player must make a choice
+                this.state.waitingForInput = false;
+                gameState.waitingForInput = false;
 
                 this.elements.choices.innerHTML = '';
                 this.elements.choices.style.display = 'flex';
@@ -773,13 +781,17 @@ class IdentifyScreen {
 
         const item = dreamsData.conclusion[this.state.dreamsConclusionIndex];
 
+        // If lowOpacity, append it to the previous dialogue (don't clear)
         if (item.lowOpacity) {
-            this.elements.dialogueText.classList.add('low-opacity-text');
+            // Add a space before the whispered text
+            this.elements.dialogueText.appendChild(document.createTextNode(' '));
+            const span = document.createElement('span');
+            span.classList.add('low-opacity-text');
+            this.elements.dialogueText.appendChild(span);
+            await typeText(item.text, false, span);
         } else {
-            this.elements.dialogueText.classList.remove('low-opacity-text');
+            await typeText(item.text, false, this.elements.dialogueText);
         }
-
-        await typeText(item.text, false, this.elements.dialogueText);
 
         if (item.action === 'show_finale') {
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1046,7 +1058,6 @@ class IdentifyScreen {
         this.elements.portrait.classList.remove('bean-up');
         this.elements.luisa.style.display = 'none';
         this.elements.luisa.classList.remove('visible', 'bean-up');
-        this.elements.dialogueText.classList.remove('low-opacity-text');
         this.elements.grid.querySelectorAll('.identify-item').forEach(item => {
             item.disabled = false;
             item.classList.remove('revealed');

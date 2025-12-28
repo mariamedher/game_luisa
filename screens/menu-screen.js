@@ -15,7 +15,7 @@ class MenuScreen {
     }
 
     areAllWitnessesInterviewed() {
-        return witnessData.witnesses && gameState.completedWitnesses.length >= witnessData.witnesses.length;
+        return DIALOGUES.witnessReports && DIALOGUES.witnessReports.witnesses && gameState.completedWitnesses.length >= DIALOGUES.witnessReports.witnesses.length;
     }
 
     isCoffeeLine(index) {

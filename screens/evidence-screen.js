@@ -315,6 +315,8 @@ class EvidenceScreen {
             gameState.completedEvidence = this.state.completedEvidence;
         }
 
+        updateIdentifySuspectButton();
+
         // Reset state
         this.state.currentEvidence = null;
         this.state.dialogueIndex = 0;
@@ -329,6 +331,12 @@ class EvidenceScreen {
         // Check if all evidence is complete
         if (this.state.completedEvidence.length >= this.evidenceItems.length) {
             this.elements.dialogueText.textContent = 'All evidence has been examined. Return to the menu to continue.';
+            this.elements.continueBtn.textContent = 'Back to Menu';
+            this.elements.continueBtn.style.display = 'block';
+            this.elements.continueBtn.onclick = () => {
+                audioManager.playSfx('click');
+                showScreen('menu-screen');
+            };
         }
     }
 

@@ -247,7 +247,7 @@ function hideInputs(screen = gameState.currentScreen) {
 function updateIdentifySuspectButton() {
     const allLeadsComplete = gameState.leadsComplete;
     const allEvidenceComplete = gameState.completedEvidence.length >= evidenceData.items.length;
-    const allWitnessesComplete = gameState.completedWitnesses.length >= witnessData.witnesses.length;
+    const allWitnessesComplete = gameState.completedWitnesses.length >= DIALOGUES.witnessReports.witnesses.length;
 
     const canIdentify = allLeadsComplete && allEvidenceComplete && allWitnessesComplete;
 
@@ -696,11 +696,12 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     identifyScreen.reset();
     // Reset end screen
     endScreen.reset();
-    // Stop final music if playing
+    // Stop final music if playing and restart main BGM
     audioManager.pauseCurrent();
     if (audioManager.currentTrack) {
         audioManager.currentTrack.element.currentTime = 0;
     }
+    audioManager.playTrack('bgm');
     elements.dialogueText.innerHTML = '';
     elements.leadsList.innerHTML = '';
     elements.persistentLeads.style.display = 'none';

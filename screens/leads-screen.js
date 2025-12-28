@@ -181,6 +181,7 @@ class LeadsScreen {
                 await typeText(item.text || "That's all for now.", false, this.elements.dialogueText);
                 this.state.leadsComplete = true;
                 gameState.leadsComplete = true;
+                updateIdentifySuspectButton();
                 this.elements.continueBtn.textContent = 'Back to Menu';
                 this.elements.continueBtn.style.display = 'block';
                 this.elements.continueBtn.onclick = () => {
